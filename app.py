@@ -27,11 +27,3 @@ if st.button("Search"):
         st.write(f"CO2 Emissions: {emissions} kg")
     else:
         st.error("Food not found in the sheet.")
-
-calories = st.number_input("Calories", min_value=0)
-price = st.number_input("Price ($)", min_value=0.0)
-emissions = st.number_input("CO2 Emissions (kg)", min_value=0.0)
-
-if st.button("Save to Sheet"):
-    sheet.append_row([food, calories, price, emissions])
-    st.success("Saved!")
