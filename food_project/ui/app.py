@@ -55,8 +55,3 @@ if st.button("Search"):
     else:
         # If the food name is not found, show an error message
         st.error("Food not found in the sheet.")
-
-# Create number input fields for the user to enter calories, price, and emissions
-calories = st.number_input("Calories", min_value=0)
-price = st.number_input("Price ($)", min_value=0.0)
-emissions = st.number_input("CO2 Emissions (kg)", min_value=0.0)
