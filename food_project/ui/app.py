@@ -32,26 +32,23 @@ food = st.text_input("Enter a food name:")
 
 # Create a button that the user can click to search for the food
 if st.button("Search"):
-    # Get all the food names from the first column of the Google Sheet
-    food_list = sheet.col_values(1)
+    # Use column 2 for 'food_name' instead of column 1
+    food_list = sheet.col_values(2)
+
+    # Skip the 'Food Query' column in headers
+    headers = sheet.row_values(1)[1:]
 
     # Check if the entered food name is in the list
     if food in food_list:
         # Find the row index of the food name (1-based index)
         row_index = food_list.index(food) + 1
 
-        # Get all the data from the row where the food name is found
-        row_data = sheet.row_values(row_index)
+        # Get the full row and skip the 'Food Query' column
+        row_data = sheet.row_values(row_index)[1:]
 
-        # Extract calories, price, and emissions from the row data
-        calories = row_data[1]
-        price = row_data[2]
-        emissions = row_data[3]
-
-        # Display the calories, price, and emissions in the app
-        st.write(f"Calories: {calories}")
-        st.write(f"Price: ${price}")
-        st.write(f"CO2 Emissions: {emissions} kg")
+        # Display each field using its header
+        for header, value in zip(headers, row_data):
+            st.write(f"{header}: {value}")
     else:
         # If the food name is not found, show an error message
         st.error("Food not found in the sheet.")
