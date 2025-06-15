@@ -11,7 +11,7 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 # Dynamically find the path to the JSON file (this replaces the old line)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 JSON_PATH = os.path.join(BASE_DIR, "food-app-462903-671ca230975a.json")
-st.write("Using credentials file at:", JSON_PATH)
+# st.write("Using credentials file at:", JSON_PATH)
 creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_PATH, scope)
 client = gspread.authorize(creds)
 try:
