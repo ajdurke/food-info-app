@@ -1,10 +1,11 @@
 import streamlit as st
-from food-app.food_project.ui.app import get_food_data
+from food_app.food_project.ui import app
+
 st.title("Food Info Tracker")
 
 food = st.text_input("Enter a food name:")
 if st.button("Search"):
-    result = get_food_data(food)
+    result = app.get_food_data(food)
     if result:
         st.write(f"Calories: {result['calories']}")
         st.write(f"Price: ${result['price']}")
