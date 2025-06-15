@@ -1,12 +1,24 @@
 import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import os 
 
 # Connect to Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("food-app-462903-671ca230975a.json", scope)
+
+
+
+# Dynamically find the path to the JSON file (this replaces the old line)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+JSON_PATH = os.path.join(BASE_DIR, "food-app-462903-671ca230975a.json")
+st.write("Using credentials file at:", JSON_PATH)
+creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_PATH, scope)
 client = gspread.authorize(creds)
-sheet = client.open("food_info_app").sheet1
+try:
+    sheet = client.open("food_info_app").sheet1
+except Exception as e:
+    st.error(f"Could not open Google Sheet: {e}")
+    st.stop()
 
 # Streamlit UI
 st.title("Food Info Tracker")
