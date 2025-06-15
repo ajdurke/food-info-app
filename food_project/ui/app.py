@@ -1,7 +1,5 @@
 import streamlit as st
-from food_project.database.google_sheets_connector import get_food_data
-
-
+from food-app.food_project.ui.app import get_food_data
 st.title("Food Info Tracker")
 
 food = st.text_input("Enter a food name:")
