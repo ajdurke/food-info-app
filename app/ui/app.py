@@ -1,5 +1,6 @@
 import streamlit as st
-from ..database.google_sheets_connector import get_food_data
+from app.database.google_sheets_connector import get_food_data
+
 
 st.title("Food Info Tracker")
 
