@@ -24,7 +24,7 @@ except Exception as e:
     st.error(f"Could not open Google Sheet: {e}")
     st.stop()
 
-# Set the app title in the browser view
+# Set the app title in the browser view 
 st.title("Food Info Tracker (Staging)")
 
 # Get all the values in the 2nd column (food names)
