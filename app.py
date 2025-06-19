@@ -1,26 +1,23 @@
-import streamlit as st  # Import Streamlit for creating web apps
-import gspread  # Import gspread for interacting with Google Sheets
-from oauth2client.service_account import ServiceAccountCredentials  # Import credentials for Google Sheets
-import os  # Import os for file path operations
+import streamlit as st
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+import json
 
-# Set the scope of permissions needed for Google Sheets
+# Define the scope for Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# Dynamically find the path to the JSON file
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-JSON_PATH = os.path.join(BASE_DIR, "food-app-462903-671ca230975a.json")
+# Load credentials JSON from Streamlit secrets (as dict)
+google_creds_dict = st.secrets["google"]
 
-# Load the credentials from the JSON file
-creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_PATH, scope)
+# Convert dict to JSON string and load credentials from the string (not a file)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(google_creds_dict, scope)
 
-# Authorize the client with the credentials
+# Authorize gspread client
 client = gspread.authorize(creds)
 
-# Try to open the Google Sheet named "food_info_app"
 try:
     sheet = client.open("food_info_app").sheet1
 except Exception as e:
-    # If there's an error, show an error message and stop the app
     st.error(f"Could not open Google Sheet: {e}")
     st.stop()
 
