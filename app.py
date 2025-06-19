@@ -1,6 +1,7 @@
 import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import os
 import json
 
 # Tell Google what kind of access we want (view and edit spreadsheets)
@@ -24,8 +25,15 @@ except Exception as e:
     st.error(f"Could not open Google Sheet: {e}")
     st.stop()
 
-# Set the app title in the browser view 
-st.title("Food Info Tracker - Staging Branch")
+# Determine which branch is running based on the environment variable
+# Streamlit Cloud automatically sets this as STREAMLIT_BRANCH
+branch = os.environ.get("STREAMLIT_BRANCH", "unknown")
+
+# Show a different title depending on the branch
+if branch == "staging":
+    st.title("Food Info Tracker - Staging Branch")
+else:
+    st.title("Food Info Tracker")
 
 # Get all the values in the 2nd column (food names)
 food_list = sheet.col_values(2)
@@ -39,7 +47,6 @@ selected_food = st.selectbox("Select a food from the list:", ["-- Select --"] + 
 
 # Function that finds and shows the info for a selected food
 # It matches the name with the sheet, then displays all the data in that row
-
 def display_food_info(food_name):
     full_food_list = sheet.col_values(2)
     if food_name in full_food_list:
@@ -56,3 +63,4 @@ def display_food_info(food_name):
 # If the user selected a food, display its info
 if selected_food != "-- Select --":
     display_food_info(selected_food)
+
