@@ -25,7 +25,7 @@ except Exception as e:
     st.stop()
 
 # Set the app title in the browser view 
-st.title("Food Info Tracker (Staging)")
+st.title("Food Info Tracker - Staging Branch")
 
 # Get all the values in the 2nd column (food names)
 food_list = sheet.col_values(2)
