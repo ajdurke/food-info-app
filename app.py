@@ -22,7 +22,7 @@ except Exception as e:
     st.stop()
 
 # Set the title of the Streamlit app
-st.title("Food Info Tracker")
+st.title("Food Info Tracker (Staging)")
 
 # Get all food names for dropdown
 food_list = sheet.col_values(2)  # 'food_name' column
