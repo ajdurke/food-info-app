@@ -27,28 +27,27 @@ except Exception as e:
 # Set the title of the Streamlit app
 st.title("Food Info Tracker")
 
-# Create a text input field for the user to enter a food name
-food = st.text_input("Enter a food name:")
+# Get all food names for dropdown
+food_list = sheet.col_values(2)  # 'food_name' column
+food_list = list(set(food_list))  # Remove duplicates if any
+food_list.sort()  # Alphabetical order
 
-# Create a button that the user can click to search for the food
-if st.button("Search"):
-    # Use column 2 for 'food_name' instead of column 1
-    food_list = sheet.col_values(2)
+# Dropdown selector
+selected_food = st.selectbox("Select a food from the list:", ["-- Select --"] + food_list)
 
-    # Skip the 'Food Query' column in headers
-    headers = sheet.row_values(1)[1:]
+# Function to display food info given a food name
+def display_food_info(food_name):
+    full_food_list = sheet.col_values(2)
+    if food_name in full_food_list:
+        row_index = full_food_list.index(food_name) + 1
+        headers = sheet.row_values(1)[1:]  # Skip 'Food Query'
+        row_data = sheet.row_values(row_index)[1:]  # Skip 'Food Query' column
 
-    # Check if the entered food name is in the list
-    if food in food_list:
-        # Find the row index of the food name (1-based index)
-        row_index = food_list.index(food) + 1
-
-        # Get the full row and skip the 'Food Query' column
-        row_data = sheet.row_values(row_index)[1:]
-
-        # Display each field using its header
         for header, value in zip(headers, row_data):
             st.write(f"{header}: {value}")
     else:
-        # If the food name is not found, show an error message
         st.error("Food not found in the sheet.")
+
+# Show details for dropdown selection
+if selected_food != "-- Select --":
+    display_food_info(selected_food)
