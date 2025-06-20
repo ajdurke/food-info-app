@@ -5,6 +5,8 @@ from food_project.ui import recipe_viewer
 import os
 import json
 
+#################################################
+
 # Tell Google what kind of access we want (view and edit spreadsheets)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
@@ -25,6 +27,8 @@ try:
 except Exception as e:
     st.error(f"Could not open Google Sheet: {e}")
     st.stop()
+
+############################################
 
 # Determine which branch is running based on the environment variable
 # Streamlit Cloud automatically sets this as STREAMLIT_BRANCH
