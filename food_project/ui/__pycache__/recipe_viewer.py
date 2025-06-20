@@ -93,82 +93,70 @@
 #     st.write(f"**Water Use:** {round(totals['water_use_liters'])} L")
 #     st.write(f"**Cost:** ${round(totals['cost_usd'], 2)}")
 ########### test code ###################
-# import gspread
-# from oauth2client.service_account import ServiceAccountCredentials
-
-# # Setup Google Sheets auth (copy from your app.py)
-# scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-# google_creds_dict = {
-#     # Paste your Streamlit secrets google dict here OR mock it for local testing
-# }
-# creds = ServiceAccountCredentials.from_json_keyfile_dict(google_creds_dict, scope)
-# client = gspread.authorize(creds)
-
-# sheet = client.open("food_info_app").sheet1
-
-# def get_food_info(food_name):
-#     """Get nutrition info for one food as dict."""
-#     full_food_list = sheet.col_values(2)
-#     if food_name in full_food_list:
-#         row_index = full_food_list.index(food_name) + 1
-#         headers = sheet.row_values(1)[1:]  # skip food name column header
-#         row_data = sheet.row_values(row_index)[1:]  # skip food name col
-#         return dict(zip(headers, row_data))
-#     return None
-
-# def get_recipe_ingredients(recipe_title):
-#     """Return list of (food_name, quantity, unit) for a recipe title."""
-#     all_recipe_titles = sheet.col_values(1)
-#     ingredients = []
-#     # Find all rows matching the recipe title in col 1
-#     for i, title in enumerate(all_recipe_titles):
-#         if title == recipe_title:
-#             # Note: gspread rows are 1-indexed, but enumerate starts at 0, so add 1
-#             row = i + 1
-#             food_name = sheet.cell(row, 5).value    # 5th col is food_name
-#             quantity = sheet.cell(row, 6).value     # 6th col is quantity
-#             unit = sheet.cell(row, 7).value         # 7th col is unit
-#             ingredients.append((food_name, quantity, unit))
-#     return ingredients
-
-# def combine_recipe_info(recipe_title):
-#     ingredients = get_recipe_ingredients(recipe_title)
-#     print(f"Ingredients for '{recipe_title}':")
-#     combined_calories = 0.0
-    
-#     for food_name, quantity, unit in ingredients:
-#         info = get_food_info(food_name)
-#         if info:
-#             # Assuming calories is a key, and quantity/unit conversions are simple numbers
-#             cal_per_unit = float(info.get("Calories", "0").replace(" kcal", "").strip())
-#             try:
-#                 qty = float(quantity)
-#             except Exception:
-#                 qty = 1  # fallback if quantity is missing or malformed
-#             # NOTE: This ignores unit conversion for now (e.g. pounds to grams)
-#             total_cal = cal_per_unit * qty
-            
-#             combined_calories += total_cal
-#             print(f" - {food_name}: {quantity} {unit}, {total_cal:.2f} kcal total")
-#         else:
-#             print(f" - {food_name}: No data found")
-
-#     print(f"\nTotal Calories for recipe '{recipe_title}': {combined_calories:.2f} kcal")
-
-# if __name__ == "__main__":
-#     # Replace with your recipe title from your Google Sheet
-#     test_recipe = "Simple Mexican Quinoa"
-#     combine_recipe_info(test_recipe)
-############ new test code ################
-import streamlit as st
+import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
+# Setup Google Sheets auth (copy from your app.py)
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+google_creds_dict = {
+    # Paste your Streamlit secrets google dict here OR mock it for local testing
+}
+creds = ServiceAccountCredentials.from_json_keyfile_dict(google_creds_dict, scope)
+client = gspread.authorize(creds)
 
-creds_dict = st.secrets["google"]
+sheet = client.open("food_info_app").sheet1
 
-print(creds_dict["type"])  # Should print: service_account
+def get_food_info(food_name):
+    """Get nutrition info for one food as dict."""
+    full_food_list = sheet.col_values(2)
+    if food_name in full_food_list:
+        row_index = full_food_list.index(food_name) + 1
+        headers = sheet.row_values(1)[1:]  # skip food name column header
+        row_data = sheet.row_values(row_index)[1:]  # skip food name col
+        return dict(zip(headers, row_data))
+    return None
 
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+def get_recipe_ingredients(recipe_title):
+    """Return list of (food_name, quantity, unit) for a recipe title."""
+    all_recipe_titles = sheet.col_values(1)
+    ingredients = []
+    # Find all rows matching the recipe title in col 1
+    for i, title in enumerate(all_recipe_titles):
+        if title == recipe_title:
+            # Note: gspread rows are 1-indexed, but enumerate starts at 0, so add 1
+            row = i + 1
+            food_name = sheet.cell(row, 5).value    # 5th col is food_name
+            quantity = sheet.cell(row, 6).value     # 6th col is quantity
+            unit = sheet.cell(row, 7).value         # 7th col is unit
+            ingredients.append((food_name, quantity, unit))
+    return ingredients
 
-print("Credentials loaded successfully")
+def combine_recipe_info(recipe_title):
+    ingredients = get_recipe_ingredients(recipe_title)
+    print(f"Ingredients for '{recipe_title}':")
+    combined_calories = 0.0
+    
+    for food_name, quantity, unit in ingredients:
+        info = get_food_info(food_name)
+        if info:
+            # Assuming calories is a key, and quantity/unit conversions are simple numbers
+            cal_per_unit = float(info.get("Calories", "0").replace(" kcal", "").strip())
+            try:
+                qty = float(quantity)
+            except Exception:
+                qty = 1  # fallback if quantity is missing or malformed
+            # NOTE: This ignores unit conversion for now (e.g. pounds to grams)
+            total_cal = cal_per_unit * qty
+            
+            combined_calories += total_cal
+            print(f" - {food_name}: {quantity} {unit}, {total_cal:.2f} kcal total")
+        else:
+            print(f" - {food_name}: No data found")
+
+    print(f"\nTotal Calories for recipe '{recipe_title}': {combined_calories:.2f} kcal")
+
+if __name__ == "__main__":
+    # Replace with your recipe title from your Google Sheet
+    test_recipe = "Simple Mexican Quinoa"
+    combine_recipe_info(test_recipe)
+
