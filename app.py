@@ -20,6 +20,9 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(google_creds_dict, scop
 # Connect to Google Sheets using the authorized credentials
 client = gspread.authorize(creds)
 
+import pprint
+pprint.pprint(st.secrets["google"])
+
 # Try to open the Google Sheet named "food_info_app"
 # If it fails, show an error in the app and stop running
 try:
