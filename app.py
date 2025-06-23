@@ -5,11 +5,6 @@ from food_project.ui import recipe_viewer
 import os
 import json
 
-
-#test
-branch = st.secrets["general"].get("STREAMLIT_BRANCH", "unknown")
-st.write("Branch detected:", branch)
-
 #################################################
 
 # Tell Google what kind of access we want (view and edit spreadsheets)
@@ -39,8 +34,8 @@ except Exception as e:
 ############################################
 
 # Determine which branch is running based on the environment variable
-# Streamlit Cloud automatically sets this as STREAMLIT_BRANCH
-# branch = os.environ.get("STREAMLIT_BRANCH", "unknown")
+branch = st.secrets["general"].get("STREAMLIT_BRANCH", "unknown")
+st.write("Branch detected:", branch)
 
 # Show a different title depending on the branch
 if branch == "staging":
