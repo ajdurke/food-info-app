@@ -31,7 +31,6 @@ def convert_to_grams(amount, unit):
         st.warning(f"Invalid amount '{amount}' — skipping.")
         return None
 
-
 def show_recipe_viewer():
     """Render recipe dropdown and ingredient details."""
     try:
