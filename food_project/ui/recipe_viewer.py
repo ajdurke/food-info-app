@@ -103,7 +103,7 @@ if selected_recipe and selected_recipe != "-- Select --":
         except Exception as e:
             st.warning(f"Error looking up {food}: {e}")
 
-    st.subheader("🔢 Total Recipe Impact")
+    st.subheader("Total Recipe Impact")
     st.write(f"**Calories:** {round(totals['calories'])} kcal")
     st.write(f"**Water Use:** {round(totals['water_use_liters'])} L")
     st.write(f"**Cost:** ${round(totals['cost_usd'], 2)}")
