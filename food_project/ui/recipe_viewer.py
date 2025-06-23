@@ -71,16 +71,31 @@ if selected_recipe and selected_recipe != "-- Select --":
 
                 food_data = dict(zip(headers, values))
 
-                calories = float(food_data.get("calories_per_100g", 0)) * qty_in_grams / 100
-                water = float(food_data.get("water_use_liters_per_100g", 0)) * qty_in_grams / 100
-                cost = float(food_data.get("cost_per_100g_usd", 0)) * qty_in_grams / 100
-
-                totals["calories"] += calories
-                totals["water_use_liters"] += water
-                totals["cost_usd"] += cost
-
                 st.markdown(f"**{food}** - {qty} {unit} ({round(qty_in_grams)}g)")
-                st.write(f"Calories: {round(calories)} kcal, Water: {round(water)} L, Cost: ${round(cost, 2)}")
+
+                for field, val in food_data.items():
+                    if field == "food_name":
+                        continue
+
+                    display_val = val
+                    try:
+                        num_val = float(val)
+                        if field.endswith("_per_100g"):
+                            num_val = num_val * qty_in_grams / 100
+
+                            if field == "calories_per_100g":
+                                totals["calories"] += num_val
+                            elif field == "water_use_liters_per_100g":
+                                totals["water_use_liters"] += num_val
+                            elif field == "cost_per_100g_usd":
+                                totals["cost_usd"] += num_val
+
+                        display_val = round(num_val, 2)
+                    except ValueError:
+                        pass
+
+                    st.write(f"{field}: {display_val}")
+
                 st.divider()
             else:
                 st.warning(f"{food} not found in food info sheet.")
