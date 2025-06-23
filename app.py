@@ -5,6 +5,11 @@ from food_project.ui import recipe_viewer
 import os
 import json
 
+
+#test
+st.write("Branch detected:", branch)
+
+
 #################################################
 
 # Tell Google what kind of access we want (view and edit spreadsheets)
