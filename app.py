@@ -7,7 +7,7 @@ import json
 
 
 #test
-branch = st.secrets.get("STREAMLIT_BRANCH", "unknown")
+branch = st.secrets["general"].get("STREAMLIT_BRANCH", "unknown")
 st.write("Branch detected:", branch)
 
 #################################################
