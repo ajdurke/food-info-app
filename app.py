@@ -40,7 +40,7 @@ except Exception as e:
 
 # Determine which branch is running based on the environment variable
 # Streamlit Cloud automatically sets this as STREAMLIT_BRANCH
-branch = os.environ.get("STREAMLIT_BRANCH", "unknown")
+# branch = os.environ.get("STREAMLIT_BRANCH", "unknown")
 
 # Show a different title depending on the branch
 if branch == "staging":
