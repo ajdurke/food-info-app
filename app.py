@@ -35,7 +35,6 @@ except Exception as e:
 
 # Determine which branch is running based on the environment variable
 branch = st.secrets["general"].get("STREAMLIT_BRANCH", "unknown")
-st.write("Branch detected:", branch)
 
 # Show a different title depending on the branch
 if branch == "staging":
