@@ -71,3 +71,6 @@ def display_food_info(food_name):
 if selected_food != "-- Select --":
     display_food_info(selected_food)
 
+# Show recipe information using separate viewer
+recipe_viewer.show_recipe_viewer()
+

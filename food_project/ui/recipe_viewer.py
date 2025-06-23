@@ -3,13 +3,13 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
-# --- Step 1: Setup ---
+# --- Google Sheets client setup ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-google_creds_dict = st.secrets["google"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(google_creds_dict, scope)
+creds_dict = st.secrets["google"]
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-# --- Step 2: Unit conversion map ---
+# --- Unit conversion map ---
 unit_conversion_to_grams = {
     "g": 1,
     "kg": 1000,
@@ -18,7 +18,7 @@ unit_conversion_to_grams = {
     "oz": 28.3495,
     "tbsp": 15,
     "tsp": 5,
-    "cup": 240  # general average, not accurate for all ingredients
+    "cup": 240,  # general average
 }
 
 def convert_to_grams(amount, unit):
@@ -31,80 +31,83 @@ def convert_to_grams(amount, unit):
         st.warning(f"Invalid amount '{amount}' — skipping.")
         return None
 
-# --- Step 3: Load Recipes Sheet ---
-try:
-    recipe_sheet = client.open("food_info_app").worksheet("recipes")
-    recipe_rows = recipe_sheet.get_all_records()
-    recipe_df = pd.DataFrame(recipe_rows)
-except Exception as e:
-    st.error(f"Could not load recipe sheet: {e}")
-    st.stop()
 
-# --- Step 4: Dropdown of recipe titles ---
-recipe_titles = recipe_df["recipe_title"].unique().tolist()
-selected_recipe = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_titles)
+def show_recipe_viewer():
+    """Render recipe dropdown and ingredient details."""
+    try:
+        recipe_sheet = client.open("food_info_app").worksheet("recipes")
+        recipe_rows = recipe_sheet.get_all_records()
+        recipe_df = pd.DataFrame(recipe_rows)
+    except Exception as e:
+        st.error(f"Could not load recipe sheet: {e}")
+        st.stop()
 
-if selected_recipe and selected_recipe != "-- Select --":
-    filtered = recipe_df[recipe_df["recipe_title"] == selected_recipe]
-    st.subheader(f"Ingredients for: {selected_recipe}")
+    recipe_titles = recipe_df["recipe_title"].unique().tolist()
+    selected_recipe = st.selectbox(
+        "Select a recipe:", ["-- Select --"] + recipe_titles, key="recipe_select"
+    )
 
-    totals = {"calories": 0, "water_use_liters": 0, "cost_usd": 0}  # Add fields you care about
+    if selected_recipe and selected_recipe != "-- Select --":
+        filtered = recipe_df[recipe_df["recipe_title"] == selected_recipe]
+        st.subheader(f"Ingredients for: {selected_recipe}")
 
-    for _, row in filtered.iterrows():
-        food = row["food_name"]
-        qty = row["quantity"]
-        unit = row["unit"]
+        totals = {"calories": 0, "water_use_liters": 0, "cost_usd": 0}
 
-        qty_in_grams = convert_to_grams(qty, unit)
-        if qty_in_grams is None:
-            continue
+        for _, row in filtered.iterrows():
+            food = row["food_name"]
+            qty = row["quantity"]
+            unit = row["unit"]
 
-        # Lookup food info in your main food sheet
-        try:
-            food_sheet = client.open("food_info_app").sheet1
-            food_names = food_sheet.col_values(2)  # Assuming food names are in column 2
+            qty_in_grams = convert_to_grams(qty, unit)
+            if qty_in_grams is None:
+                continue
 
-            if food in food_names:
-                idx = food_names.index(food) + 1
-                headers = food_sheet.row_values(1)
-                values = food_sheet.row_values(idx)
+            try:
+                food_sheet = client.open("food_info_app").sheet1
+                food_names = food_sheet.col_values(2)
 
-                food_data = dict(zip(headers, values))
+                if food in food_names:
+                    idx = food_names.index(food) + 1
+                    headers = food_sheet.row_values(1)
+                    values = food_sheet.row_values(idx)
 
-                st.markdown(f"**{food}** - {qty} {unit} ({round(qty_in_grams)}g)")
+                    food_data = dict(zip(headers, values))
 
-                for field, val in food_data.items():
-                    if field == "food_name":
-                        continue
+                    st.markdown(
+                        f"**{food}** - {qty} {unit} ({round(qty_in_grams)}g)"
+                    )
 
-                    display_val = val
-                    try:
-                        num_val = float(val)
-                        if field.endswith("_per_100g"):
-                            num_val = num_val * qty_in_grams / 100
+                    for field, val in food_data.items():
+                        if field == "food_name":
+                            continue
 
-                            if field == "calories_per_100g":
-                                totals["calories"] += num_val
-                            elif field == "water_use_liters_per_100g":
-                                totals["water_use_liters"] += num_val
-                            elif field == "cost_per_100g_usd":
-                                totals["cost_usd"] += num_val
+                        display_val = val
+                        try:
+                            num_val = float(val)
+                            if field.endswith("_per_100g"):
+                                num_val = num_val * qty_in_grams / 100
 
-                        display_val = round(num_val, 2)
-                    except ValueError:
-                        pass
+                                if field == "calories_per_100g":
+                                    totals["calories"] += num_val
+                                elif field == "water_use_liters_per_100g":
+                                    totals["water_use_liters"] += num_val
+                                elif field == "cost_per_100g_usd":
+                                    totals["cost_usd"] += num_val
 
-                    st.write(f"{field}: {display_val}")
+                            display_val = round(num_val, 2)
+                        except ValueError:
+                            pass
 
-                st.divider()
-            else:
-                st.warning(f"{food} not found in food info sheet.")
+                        st.write(f"{field}: {display_val}")
 
-        except Exception as e:
-            st.warning(f"Error looking up {food}: {e}")
+                    st.divider()
+                else:
+                    st.warning(f"{food} not found in food info sheet.")
 
-    st.subheader("🔢 Total Recipe Impact")
-    st.write(f"**Calories:** {round(totals['calories'])} kcal")
-    st.write(f"**Water Use:** {round(totals['water_use_liters'])} L")
-    st.write(f"**Cost:** ${round(totals['cost_usd'], 2)}")
+            except Exception as e:
+                st.warning(f"Error looking up {food}: {e}")
 
+        st.subheader("🔢 Total Recipe Impact")
+        st.write(f"**Calories:** {round(totals['calories'])} kcal")
+        st.write(f"**Water Use:** {round(totals['water_use_liters'])} L")
+        st.write(f"**Cost:** ${round(totals['cost_usd'], 2)}")
