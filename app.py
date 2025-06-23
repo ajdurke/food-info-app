@@ -7,6 +7,7 @@ import json
 
 
 #test
+branch = os.environ.get("STREAMLIT_BRANCH", "unknown")
 st.write("Branch detected:", branch)
 
 
