@@ -13,7 +13,7 @@ def init_db(conn: sqlite3.Connection) -> None:
         """
         CREATE TABLE IF NOT EXISTS recipes (
             id INTEGER PRIMARY KEY,
-            title TEXT NOT NULL,
+            recipe_title TEXT NOT NULL,
             version TEXT,
             source_url TEXT
         )
@@ -24,8 +24,8 @@ def init_db(conn: sqlite3.Connection) -> None:
         CREATE TABLE IF NOT EXISTS ingredients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             recipe_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            amount REAL,
+            food_name TEXT NOT NULL,
+            quantity REAL,
             unit TEXT,
             FOREIGN KEY (recipe_id) REFERENCES recipes(id)
         )
@@ -47,7 +47,7 @@ def import_recipes(csv_path: Path, conn: sqlite3.Connection) -> None:
 
             if recipe_id not in seen_recipes:
                 cur.execute(
-                    "INSERT OR IGNORE INTO recipes (id, title, version, source_url) VALUES (?, ?, ?, ?)",
+                    "INSERT OR IGNORE INTO recipes (id, recipe_title, version, source_url) VALUES (?, ?, ?, ?)",
                     (
                         recipe_id,
                         row.get("recipe_title") or row.get("title"),
@@ -58,7 +58,7 @@ def import_recipes(csv_path: Path, conn: sqlite3.Connection) -> None:
                 seen_recipes.add(recipe_id)
 
             cur.execute(
-                "INSERT INTO ingredients (recipe_id, name, amount, unit) VALUES (?, ?, ?, ?)",
+                "INSERT INTO ingredients (recipe_id, food_name, quantity, unit) VALUES (?, ?, ?, ?)",
                 (
                     recipe_id,
                     row.get("food_name") or row.get("name"),

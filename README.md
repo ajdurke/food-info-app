@@ -45,6 +45,8 @@ can populate the SQLite database without network access:
 python scripts/import_csv_to_sqlite.py path/to/recipes.csv
 ```
 
-This command creates any missing tables and inserts one `recipes` row for each
-`recipe_id` found in the CSV along with its ingredient rows.
+The CSV should include the columns `recipe_id`, `recipe_title`, `version`,
+`source_url`, `food_name`, `quantity` and `unit`. The script creates any
+missing tables and inserts one `recipes` row for each `recipe_id` along with
+its ingredient rows.
 

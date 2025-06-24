@@ -9,7 +9,7 @@ from food_project.ui import recipe_viewer
 def load_food_list():
     conn = sqlite3.connect("food_info.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT name FROM ingredients ORDER BY name")
+    cursor.execute("SELECT DISTINCT food_name FROM ingredients ORDER BY food_name")
     rows = cursor.fetchall()
     conn.close()
     return [row[0] for row in rows]
@@ -22,10 +22,10 @@ def load_food_details(food_name):
     conn = sqlite3.connect("food_info.db")
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT r.title, r.version, r.source_url, i.name, i.amount, i.unit
+        SELECT r.recipe_title, r.version, r.source_url, i.food_name, i.quantity, i.unit
         FROM recipes r
         JOIN ingredients i ON r.id = i.recipe_id
-        WHERE i.name = ?
+        WHERE i.food_name = ?
     """, (food_name,))
     rows = cursor.fetchall()
     conn.close()
