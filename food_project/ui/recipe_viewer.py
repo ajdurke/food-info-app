@@ -89,7 +89,7 @@ def match_ingredient(name, candidate_names, threshold=85):
     return None
 
 def show_recipe_viewer():
-    if st.button("🔄 Refresh Data"):
+    if st.button("Refresh Data"):
         st.cache_data.clear()
         st.experimental_rerun()
 
