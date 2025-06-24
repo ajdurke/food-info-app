@@ -50,7 +50,8 @@ def show_recipe_viewer():
         filtered = recipe_df[recipe_df["recipe_title"] == selected_recipe]
         st.subheader(f"Ingredients for: {selected_recipe}")
 
-        totals = {"calories": 0, "water_use_liters": 0, "cost_usd": 0}
+        ingredient_rows = []
+        totals = {}
 
         for _, row in filtered.iterrows():
             food = row["food_name"]
@@ -72,41 +73,45 @@ def show_recipe_viewer():
 
                     food_data = dict(zip(headers, values))
 
-                    st.markdown(
-                        f"**{food}** - {qty} {unit} ({round(qty_in_grams)}g)"
-                    )
+                    row_data = {
+                        "ingredient": food,
+                        "quantity": f"{qty} {unit}",
+                        "grams": round(qty_in_grams, 2),
+                    }
 
                     for field, val in food_data.items():
                         if field == "food_name":
                             continue
 
                         display_val = val
+                        numeric_val = None
                         try:
-                            num_val = float(val)
+                            numeric_val = float(val)
                             if field.endswith("_per_100g"):
-                                num_val = num_val * qty_in_grams / 100
-
-                                if field == "calories_per_100g":
-                                    totals["calories"] += num_val
-                                elif field == "water_use_liters_per_100g":
-                                    totals["water_use_liters"] += num_val
-                                elif field == "cost_per_100g_usd":
-                                    totals["cost_usd"] += num_val
-
-                            display_val = round(num_val, 2)
+                                numeric_val = numeric_val * qty_in_grams / 100
+                            display_val = round(numeric_val, 2)
                         except ValueError:
                             pass
 
-                        st.write(f"{field}: {display_val}")
+                        row_data[field] = display_val
+                        if numeric_val is not None:
+                            totals[field] = totals.get(field, 0) + numeric_val
 
-                    st.divider()
+                    ingredient_rows.append(row_data)
                 else:
                     st.warning(f"{food} not found in food info sheet.")
 
             except Exception as e:
                 st.warning(f"Error looking up {food}: {e}")
 
-        st.subheader("🔢 Total Recipe Impact")
-        st.write(f"**Calories:** {round(totals['calories'])} kcal")
-        st.write(f"**Water Use:** {round(totals['water_use_liters'])} L")
-        st.write(f"**Cost:** ${round(totals['cost_usd'], 2)}")
+        if ingredient_rows:
+            df = pd.DataFrame(ingredient_rows)
+            totals_row = {col: "" for col in df.columns}
+            totals_row["ingredient"] = "Total"
+            for key, value in totals.items():
+                if key in df.columns:
+                    totals_row[key] = round(value, 2)
+            df = pd.concat([df, pd.DataFrame([totals_row])], ignore_index=True)
+            st.dataframe(df)
+        else:
+            st.info("No ingredients found for this recipe.")
