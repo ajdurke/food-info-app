@@ -1,14 +1,8 @@
 import streamlit as st
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import sqlite3
 import pandas as pd
+# ---------------
 from rapidfuzz import fuzz, process
-
-# --- Google Sheets client setup ---
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds_dict = st.secrets["google"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-client = gspread.authorize(creds)
 
 # --- Unit conversion map and aliases ---
 unit_conversion_to_grams = {
@@ -73,16 +67,33 @@ def normalize_ingredient(name):
 
 @st.cache_data(ttl=300)
 def load_recipe_df():
-    recipe_sheet = client.open("food_info_app").worksheet("recipes")
-    recipe_rows = recipe_sheet.get_all_records()
-    return pd.DataFrame(recipe_rows)
+    """Load recipe and ingredient information from the SQLite database."""
+    conn = sqlite3.connect("food_info.db")
+    query = """
+        SELECT r.id AS recipe_id,
+               r.title AS recipe_title,
+               r.version,
+               r.source_url,
+               i.name  AS food_name,
+               i.amount AS quantity,
+               i.unit
+        FROM recipes r
+        JOIN ingredients i ON r.id = i.recipe_id
+    """
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
 
 @st.cache_data(ttl=300)
 def load_food_sheet():
-    food_sheet = client.open("food_info_app").sheet1
-    headers = food_sheet.row_values(1)
-    values = food_sheet.get_all_values()[1:]  # Skip header
-    return headers, values
+    """Return headers and rows from the food_info table."""
+    conn = sqlite3.connect("food_info.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM food_info")
+    rows = cur.fetchall()
+    headers = [d[0] for d in cur.description]
+    conn.close()
+    return headers, [list(row) for row in rows]
 
 def match_ingredient(name, candidate_names, threshold=85):
     match, score, _ = process.extractOne(name, candidate_names, scorer=fuzz.ratio)
@@ -98,7 +109,7 @@ def show_recipe_viewer():
     try:
         recipe_df = load_recipe_df()
     except Exception as e:
-        st.error(f"Could not load recipe sheet: {e}")
+        st.error(f"Could not load recipe data: {e}")
         st.stop()
 
     recipe_titles = recipe_df["recipe_title"].unique().tolist()
@@ -120,7 +131,7 @@ def show_recipe_viewer():
             }
             all_normalized_names = list(normalized_food_map.keys())
         except Exception as e:
-            st.error(f"Could not load food sheet: {e}")
+            st.error(f"Could not load food data: {e}")
             st.stop()
 
         for _, row in filtered.iterrows():
