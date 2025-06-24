@@ -57,7 +57,7 @@ def convert_to_grams(amount, unit):
 
 def normalize_ingredient(name):
     name = name.lower().strip()
-    modifiers = ["sliced", "chopped", "fresh", "unsalted", "diced", "minced", "grated", "large", "small"]
+    modifiers = ["sliced", "chopped", "fresh", "salted","unsalted", "diced", "minced", "grated", "large", "small"]
     words = name.split()
     words = [word for word in words if word not in modifiers]
     name = " ".join(words)
@@ -66,6 +66,8 @@ def normalize_ingredient(name):
         "all-purpose flour": "flour",
         "yellow onion": "onion",
         "whole milk": "milk",
+        "chicken breast or thighs": "chicken",
+
     }
     return replacements.get(name, name)
 
