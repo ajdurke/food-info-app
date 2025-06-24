@@ -67,11 +67,22 @@ def normalize_ingredient(name):
     }
     return replacements.get(name, name)
 
+@st.cache_data(ttl=300)
+def load_recipe_df():
+    recipe_sheet = client.open("food_info_app").worksheet("recipes")
+    recipe_rows = recipe_sheet.get_all_records()
+    return pd.DataFrame(recipe_rows)
+
+@st.cache_data(ttl=300)
+def load_food_sheet():
+    food_sheet = client.open("food_info_app").sheet1
+    headers = food_sheet.row_values(1)
+    values = food_sheet.get_all_values()[1:]  # Skip header
+    return headers, values
+
 def show_recipe_viewer():
     try:
-        recipe_sheet = client.open("food_info_app").worksheet("recipes")
-        recipe_rows = recipe_sheet.get_all_records()
-        recipe_df = pd.DataFrame(recipe_rows)
+        recipe_df = load_recipe_df()
     except Exception as e:
         st.error(f"Could not load recipe sheet: {e}")
         st.stop()
@@ -88,6 +99,15 @@ def show_recipe_viewer():
         ingredient_rows = []
         totals = {}
 
+        try:
+            headers, food_rows = load_food_sheet()
+            normalized_food_map = {
+                normalize_ingredient(row[1]): row for row in food_rows if len(row) > 1
+            }
+        except Exception as e:
+            st.error(f"Could not load food sheet: {e}")
+            st.stop()
+
         for _, row in filtered.iterrows():
             food = normalize_ingredient(row["food_name"])
             qty = row["quantity"]
@@ -97,47 +117,38 @@ def show_recipe_viewer():
             if qty_in_grams is None:
                 continue
 
-            try:
-                food_sheet = client.open("food_info_app").sheet1
-                food_names = [normalize_ingredient(name) for name in food_sheet.col_values(2)]
+            if food in normalized_food_map:
+                values = normalized_food_map[food]
 
-                if food in food_names:
-                    idx = food_names.index(food) + 1
-                    headers = food_sheet.row_values(1)
-                    values = food_sheet.row_values(idx)
+                row_data = {
+                    "ingredient": food,
+                    "quantity": f"{qty} {unit}",
+                    "grams": round(qty_in_grams, 2),
+                }
 
-                    food_data = dict(zip(headers, values))
+                food_data = dict(zip(headers, values))
 
-                    row_data = {
-                        "ingredient": food,
-                        "quantity": f"{qty} {unit}",
-                        "grams": round(qty_in_grams, 2),
-                    }
+                for field, val in food_data.items():
+                    if field == "food_name":
+                        continue
 
-                    for field, val in food_data.items():
-                        if field == "food_name":
-                            continue
+                    display_val = val
+                    numeric_val = None
+                    try:
+                        numeric_val = float(val)
+                        if field.endswith("_per_100g"):
+                            numeric_val = numeric_val * qty_in_grams / 100
+                        display_val = round(numeric_val, 2)
+                    except ValueError:
+                        pass
 
-                        display_val = val
-                        numeric_val = None
-                        try:
-                            numeric_val = float(val)
-                            if field.endswith("_per_100g"):
-                                numeric_val = numeric_val * qty_in_grams / 100
-                            display_val = round(numeric_val, 2)
-                        except ValueError:
-                            pass
+                    row_data[field] = display_val
+                    if numeric_val is not None:
+                        totals[field] = totals.get(field, 0) + numeric_val
 
-                        row_data[field] = display_val
-                        if numeric_val is not None:
-                            totals[field] = totals.get(field, 0) + numeric_val
-
-                    ingredient_rows.append(row_data)
-                else:
-                    st.warning(f"{food} not found in food info sheet.")
-
-            except Exception as e:
-                st.warning(f"Error looking up {food}: {e}")
+                ingredient_rows.append(row_data)
+            else:
+                st.warning(f"{food} not found in food info sheet.")
 
         if ingredient_rows:
             df = pd.DataFrame(ingredient_rows)
