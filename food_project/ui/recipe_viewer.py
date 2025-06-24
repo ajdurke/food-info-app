@@ -164,17 +164,20 @@ def show_recipe_viewer():
 
                     display_val = val
                     numeric_val = None
-                    try:
-                        numeric_val = float(val)
-                        if field.endswith("_per_100g"):
-                            numeric_val = numeric_val * qty_in_grams / 100
-                        display_val = round(numeric_val, 2)
-                    except ValueError:
-                        pass
+
+                    if val is not None:
+                        try:
+                            numeric_val = float(val)
+                            if field.endswith("_per_100g"):
+                                numeric_val = numeric_val * qty_in_grams / 100
+                            display_val = round(numeric_val, 2)
+                        except (ValueError, TypeError):
+                            pass  # Leave display_val as-is
 
                     row_data[field] = display_val
                     if numeric_val is not None:
                         totals[field] = totals.get(field, 0) + numeric_val
+
 
                 ingredient_rows.append(row_data)
             else:
