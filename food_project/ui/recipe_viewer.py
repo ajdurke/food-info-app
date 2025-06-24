@@ -85,7 +85,7 @@ def load_recipe_df():
     return df
 
 @st.cache_data(ttl=300)
-def load_food_sheet():
+def load_food_data():
     """Return headers and rows from the food_info table."""
     conn = sqlite3.connect("food_info.db")
     cur = conn.cursor()
@@ -125,7 +125,7 @@ def show_recipe_viewer():
         totals = {}
 
         try:
-            headers, food_rows = load_food_sheet()
+            headers, food_rows = load_food_data()
             normalized_food_map = {
                 normalize_ingredient(row[1]): row for row in food_rows if len(row) > 1
             }
@@ -178,7 +178,7 @@ def show_recipe_viewer():
 
                 ingredient_rows.append(row_data)
             else:
-                st.warning(f"{original_name} not found in food info sheet.")
+                st.warning(f"{original_name} not found in food info database.")
 
         if ingredient_rows:
             df = pd.DataFrame(ingredient_rows)
