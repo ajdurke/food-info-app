@@ -9,7 +9,7 @@ creds_dict = st.secrets["google"]
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
 client = gspread.authorize(creds)
 
-# --- Unit conversion map ---
+# --- Unit conversion map and aliases ---
 unit_conversion_to_grams = {
     "g": 1,
     "kg": 1000,
@@ -18,10 +18,33 @@ unit_conversion_to_grams = {
     "oz": 28.3495,
     "tbsp": 15,
     "tsp": 5,
-    "cup": 240,  # general average
+    "cup": 240,
 }
 
+unit_aliases = {
+    "pound": "lb",
+    "pounds": "lb",
+    "lbs": "lb",
+    "ounce": "oz",
+    "ounces": "oz",
+    "teaspoon": "tsp",
+    "teaspoons": "tsp",
+    "tablespoon": "tbsp",
+    "tablespoons": "tbsp",
+    "cups": "cup",
+    "count": None,
+    "sheet": None,
+}
+
+def normalize_unit(unit):
+    unit = unit.lower().strip()
+    return unit_aliases.get(unit, unit)
+
 def convert_to_grams(amount, unit):
+    unit = normalize_unit(unit)
+    if unit is None:
+        st.warning(f"Unit '{unit}' not recognized — skipping conversion.")
+        return None
     try:
         return float(amount) * unit_conversion_to_grams[unit]
     except KeyError:
@@ -31,8 +54,20 @@ def convert_to_grams(amount, unit):
         st.warning(f"Invalid amount '{amount}' — skipping.")
         return None
 
+def normalize_ingredient(name):
+    name = name.lower().strip()
+    modifiers = ["sliced", "chopped", "fresh", "unsalted", "diced", "minced", "grated", "large", "small"]
+    words = name.split()
+    name = " ".join([word for word in words if word not in modifiers])
+    
+    replacements = {
+        "all-purpose flour": "flour",
+        "yellow onion": "onion",
+        "whole milk": "milk",
+    }
+    return replacements.get(name, name)
+
 def show_recipe_viewer():
-    """Render recipe dropdown and ingredient details."""
     try:
         recipe_sheet = client.open("food_info_app").worksheet("recipes")
         recipe_rows = recipe_sheet.get_all_records()
@@ -54,7 +89,7 @@ def show_recipe_viewer():
         totals = {}
 
         for _, row in filtered.iterrows():
-            food = row["food_name"]
+            food = normalize_ingredient(row["food_name"])
             qty = row["quantity"]
             unit = row["unit"]
 
@@ -64,7 +99,7 @@ def show_recipe_viewer():
 
             try:
                 food_sheet = client.open("food_info_app").sheet1
-                food_names = food_sheet.col_values(2)
+                food_names = [normalize_ingredient(name) for name in food_sheet.col_values(2)]
 
                 if food in food_names:
                     idx = food_names.index(food) + 1
