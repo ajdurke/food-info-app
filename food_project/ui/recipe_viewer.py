@@ -2,6 +2,7 @@ import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
+from rapidfuzz import fuzz, process
 
 # --- Google Sheets client setup ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -58,8 +59,9 @@ def normalize_ingredient(name):
     name = name.lower().strip()
     modifiers = ["sliced", "chopped", "fresh", "unsalted", "diced", "minced", "grated", "large", "small"]
     words = name.split()
-    name = " ".join([word for word in words if word not in modifiers])
-    
+    words = [word for word in words if word not in modifiers]
+    name = " ".join(words)
+
     replacements = {
         "all-purpose flour": "flour",
         "yellow onion": "onion",
@@ -80,7 +82,17 @@ def load_food_sheet():
     values = food_sheet.get_all_values()[1:]  # Skip header
     return headers, values
 
+def match_ingredient(name, candidate_names, threshold=85):
+    match, score, _ = process.extractOne(name, candidate_names, scorer=fuzz.ratio)
+    if score >= threshold:
+        return match
+    return None
+
 def show_recipe_viewer():
+    if st.button("🔄 Refresh Data"):
+        st.cache_data.clear()
+        st.experimental_rerun()
+
     try:
         recipe_df = load_recipe_df()
     except Exception as e:
@@ -104,12 +116,14 @@ def show_recipe_viewer():
             normalized_food_map = {
                 normalize_ingredient(row[1]): row for row in food_rows if len(row) > 1
             }
+            all_normalized_names = list(normalized_food_map.keys())
         except Exception as e:
             st.error(f"Could not load food sheet: {e}")
             st.stop()
 
         for _, row in filtered.iterrows():
-            food = normalize_ingredient(row["food_name"])
+            original_name = row["food_name"]
+            food = normalize_ingredient(original_name)
             qty = row["quantity"]
             unit = row["unit"]
 
@@ -117,11 +131,14 @@ def show_recipe_viewer():
             if qty_in_grams is None:
                 continue
 
-            if food in normalized_food_map:
-                values = normalized_food_map[food]
+            # Try exact match, then fuzzy match fallback
+            matched_name = food if food in normalized_food_map else match_ingredient(food, all_normalized_names)
+
+            if matched_name:
+                values = normalized_food_map[matched_name]
 
                 row_data = {
-                    "ingredient": food,
+                    "ingredient": original_name,
                     "quantity": f"{qty} {unit}",
                     "grams": round(qty_in_grams, 2),
                 }
@@ -148,7 +165,7 @@ def show_recipe_viewer():
 
                 ingredient_rows.append(row_data)
             else:
-                st.warning(f"{food} not found in food info sheet.")
+                st.warning(f"{original_name} not found in food info sheet.")
 
         if ingredient_rows:
             df = pd.DataFrame(ingredient_rows)
