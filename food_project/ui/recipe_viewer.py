@@ -104,7 +104,7 @@ def match_ingredient(name, candidate_names, threshold=85):
 def show_recipe_viewer():
     if st.button("Refresh Data"):
         st.cache_data.clear()
-        st.experimental_rerun()
+        st.rerun()
 
     try:
         recipe_df = load_recipe_df()
