@@ -6,8 +6,12 @@ CSV_PATH = "food_info_app - Sheet1.csv"
 
 def init_food_table(conn):
     cursor = conn.cursor()
+
+    # Drop the old table if it exists (optional but useful here)
+    cursor.execute("DROP TABLE IF EXISTS food_info")
+
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS food_info (
+        CREATE TABLE food_info (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             serving_qty TEXT,
@@ -26,6 +30,7 @@ def init_food_table(conn):
         )
     """)
     conn.commit()
+
 
 def import_food_data(conn):
     cursor = conn.cursor()
