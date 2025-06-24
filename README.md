@@ -27,11 +27,24 @@ ingredients(
 
 ## Migrating Data
 
-Use `scripts/migrate_to_sqlite.py` to copy data from the existing Google Sheet into `data/food_info.db`:
+Use `scripts/migrate_to_sqlite.py` to copy data directly from Google Sheets
+into `data/food_info.db`:
 
 ```bash
 python scripts/migrate_to_sqlite.py
 ```
 
 The script expects the same Google credentials currently used by the app (via `streamlit.secrets`).
+
+### Importing from CSV
+
+If you have exported the **recipes** tab from Google Sheets as a CSV file you
+can populate the SQLite database without network access:
+
+```bash
+python scripts/import_csv_to_sqlite.py path/to/recipes.csv
+```
+
+This command creates any missing tables and inserts one `recipes` row for each
+`recipe_id` found in the CSV along with its ingredient rows.
 
