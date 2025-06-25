@@ -37,4 +37,26 @@ def init_db(conn: sqlite3.Connection) -> None:
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS food_info (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            raw_name TEXT NOT NULL,
+            normalized_name TEXT NOT NULL UNIQUE,
+            serving_qty TEXT,
+            serving_unit TEXT,
+            serving_weight_grams REAL,
+            calories REAL,
+            fat REAL,
+            saturated_fat REAL,
+            cholesterol REAL,
+            sodium REAL,
+            carbs REAL,
+            fiber REAL,
+            sugars REAL,
+            protein REAL,
+            potassium REAL
+        )
+        """
+    )
     conn.commit()
