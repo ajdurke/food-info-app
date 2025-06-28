@@ -5,9 +5,31 @@ import requests
 
 from .sqlite_connector import get_connection, init_db
 
-NUTRITIONIX_APP_ID = os.getenv("NUTRITIONIX_APP_ID")
-NUTRITIONIX_API_KEY = os.getenv("NUTRITIONIX_API_KEY")
+import os
+import sqlite3
+from typing import Optional, Dict, Any
+import requests
+
+from .sqlite_connector import get_connection, init_db
+
+# Hybrid credential loading: first try Streamlit, then fallback to .env or system env vars
+try:
+    import streamlit as st
+    NUTRITIONIX_APP_ID = st.secrets["nutritionix"]["app_id"]
+    NUTRITIONIX_API_KEY = st.secrets["nutritionix"]["api_key"]
+    print("Using Streamlit secrets for Nutritionix credentials")
+except Exception:
+    from dotenv import load_dotenv
+    load_dotenv()
+    NUTRITIONIX_APP_ID = os.getenv("NUTRITIONIX_APP_ID")
+    NUTRITIONIX_API_KEY = os.getenv("NUTRITIONIX_API_KEY")
+    print("Using environment variables for Nutritionix credentials")
+
+if not NUTRITIONIX_APP_ID or not NUTRITIONIX_API_KEY:
+    raise Exception("Nutritionix credentials not set in secrets.toml or .env")
+
 API_URL = "https://trackapi.nutritionix.com/v2/natural/nutrients"
+
 
 def normalize_food_name(name: str) -> str:
     if not name:
