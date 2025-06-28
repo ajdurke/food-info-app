@@ -2,6 +2,13 @@ import streamlit as st
 import sqlite3
 from food_project.ui import recipe_viewer
 
+try:
+    app_id = st.secrets["nutritionix"]["app_id"]
+    api_key = st.secrets["nutritionix"]["api_key"]
+    st.success(f"Loaded Nutritionix credentials from `secrets.toml`")
+except Exception as e:
+    st.error(f"Failed to load Nutritionix credentials: {e}")
+
 # -------------------------------
 # Load distinct food names
 # -------------------------------
