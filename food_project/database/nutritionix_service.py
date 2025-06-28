@@ -88,7 +88,9 @@ def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None
     if conn is None:
         conn = get_connection()
         created = True
+    conn.row_factory = sqlite3.Row
     init_db(conn)
+    
     normalized = normalize_food_name(food_name)
     cur = conn.cursor()
     cur.execute("SELECT * FROM food_info WHERE normalized_name = ?", (normalized,))
