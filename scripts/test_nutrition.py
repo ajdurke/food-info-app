@@ -2,7 +2,7 @@ import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import sqlite3
-from food_project.database.nutritionix_connector import get_nutrition_data
+from food_project.database.nutritionix_service import get_nutrition_data
 
 # 1. Connect to your local database
 conn = sqlite3.connect("your_database_path_here.db")  # Update this if needed
