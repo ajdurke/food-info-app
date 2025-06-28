@@ -76,8 +76,10 @@ def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None
     else:
         try:
             fetched = _fetch_from_api(food_name)
-        except Exception:
+        except Exception as e:
+            print(f"API fetch failed: {e}")
             fetched = None
+
         if fetched:
             cur.execute(
                 """
