@@ -1,0 +1,270 @@
+apple
+banana
+orange
+grape
+watermelon
+strawberry
+blueberry
+raspberry
+blackberry
+kiwi
+pineapple
+mango
+papaya
+peach
+pear
+plum
+cherry
+lemon
+lime
+cantaloupe
+honeydew
+grapefruit
+apricot
+pomegranate
+fig
+guava
+date
+coconut
+carrot
+broccoli
+cauliflower
+spinach
+kale
+lettuce
+romaine
+arugula
+zucchini
+squash
+cucumber
+celery
+bell pepper
+onion
+garlic
+ginger
+green beans
+snap peas
+edamame
+okra
+sweet potato
+potato
+yam
+beet
+radish
+turnip
+parsnip
+leek
+asparagus
+mushroom
+artichoke
+brussels sprouts
+eggplant
+tomato
+corn
+pumpkin
+chili pepper
+chicken breast
+chicken thigh
+ground beef
+steak
+pork chop
+bacon
+ham
+turkey breast
+sausage
+hot dog
+pepperoni
+salami
+lamb
+duck
+venison
+shrimp
+salmon
+tuna
+cod
+tilapia
+catfish
+trout
+mackerel
+sardines
+crab
+lobster
+scallops
+oysters
+clams
+white rice
+brown rice
+quinoa
+oats
+barley
+farro
+bulgur
+couscous
+bread
+whole wheat bread
+white bread
+rye bread
+bagel
+english muffin
+tortilla
+corn tortilla
+flour tortilla
+pita
+naan
+crackers
+pasta
+spaghetti
+macaroni
+noodles
+ramen
+soba noodles
+udon
+lentils
+chickpeas
+black beans
+kidney beans
+pinto beans
+soybeans
+navy beans
+peas
+tofu
+whole milk
+lowfat milk
+skim milk
+almond milk
+soy milk
+oat milk
+yogurt
+greek yogurt
+cheddar cheese
+mozzarella cheese
+parmesan cheese
+ricotta
+cream cheese
+butter
+margarine
+ice cream
+whipped cream
+half and half
+sour cream
+egg
+egg white
+egg yolk
+olive oil
+canola oil
+vegetable oil
+coconut oil
+avocado oil
+shortening
+lard
+mayonnaise
+dark chocolate
+milk chocolate
+chips
+pretzels
+ketchup
+mustard
+ranch dressing
+vinaigrette
+caesar dressing
+soy sauce
+sriracha
+hot sauce
+barbecue sauce
+honey mustard
+buffalo sauce
+teriyaki sauce
+tahini
+hummus
+salsa
+guacamole
+relish
+gravy
+pesto
+kimchi
+falafel
+tabbouleh
+tzatziki
+plantain
+cassava
+yuca
+fufu
+injera
+jollof rice
+coffee
+black tea
+green tea
+cola
+orange juice
+apple juice
+grape juice
+lemonade
+salt
+black pepper
+sugar
+brown sugar
+honey
+maple syrup
+molasses
+baking soda
+baking powder
+cornstarch
+yeast
+flour
+whole wheat flour
+all-purpose flour
+gluten-free flour
+spaghetti squash
+acorn squash
+butternut squash
+cabbage
+bok choy
+collard greens
+swiss chard
+turnip greens
+mustard greens
+watercress
+endive
+radicchio
+cress
+arctic char
+halibut
+sea bass
+tilapia
+pollock
+mullet
+anchovy
+caviar
+seaweed
+nori
+kombu
+wakame
+kelp
+spirulina
+chlorella
+chia seeds
+flaxseeds
+pumpkin seeds
+sunflower seeds
+safflower seeds
+sesame seeds
+hemp seeds
+poppy seeds
+caraway seeds
+cumin seeds
+fennel seeds
+coriander seeds
+coconut milk
+almond butter
+peanut butter
+cashew butter
+hazelnut spread
+sunflower seed butter
+tahini paste
+nutella
+granola
+muesli
+corn chips
+tortilla chips
+pita chips
+veggie chips
