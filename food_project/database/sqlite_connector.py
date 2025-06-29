@@ -68,3 +68,37 @@ def init_db(conn: sqlite3.Connection) -> None:
     )
 
     conn.commit()
+
+def save_recipe_and_ingredients(recipe_data: dict) -> int:
+    """Insert a recipe and its ingredients into the SQLite database.
+
+    Parameters
+    ----------
+    recipe_data: dict
+        Dictionary containing ``title`` (str), ``url`` (str), and ``ingredients``
+        (list of raw ingredient strings).
+
+    Returns
+    -------
+    int
+        The recipe_id of the inserted recipe.
+    """
+
+    conn = get_connection()  # uses your existing DB path logic
+    cur = conn.cursor()
+
+    cur.execute(
+        "INSERT INTO recipes (recipe_title, source_url) VALUES (?, ?)",
+        (recipe_data.get("title"), recipe_data.get("url")),
+    )
+    recipe_id = cur.lastrowid
+
+    for ingredient in recipe_data.get("ingredients", []):
+        cur.execute(
+            "INSERT INTO ingredients (recipe_id, food_name, quantity, unit) VALUES (?, ?, ?, ?)",
+            (recipe_id, ingredient, None, None),
+        )
+
+    conn.commit()
+    conn.close()
+    return recipe_id
