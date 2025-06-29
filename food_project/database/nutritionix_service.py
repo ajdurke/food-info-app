@@ -133,3 +133,51 @@ def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None
     if created:
         conn.close()
     return result
+
+
+from rapidfuzz import fuzz, process  # make sure rapidfuzz is installed
+
+def fetch_food_matches(query: str):
+    """Return (exact_match, next_best_match, similar_matches) from Nutritionix API"""
+    try:
+        # 1. Query Nutritionix
+        headers = {
+            "x-app-id": NUTRITIONIX_APP_ID,
+            "x-app-key": NUTRITIONIX_API_KEY,
+        }
+        response = requests.post(API_URL, json={"query": query}, headers=headers, timeout=10)
+        response.raise_for_status()
+        foods = response.json().get("foods", [])
+        if not foods:
+            return None, None, []
+
+        # 2. Normalize names and score
+        normalized_query = normalize_food_name(query)
+        for food in foods:
+            food["raw_name"] = food.get("food_name", "")
+            food["normalized_name"] = normalize_food_name(food["raw_name"])
+        matches = sorted(
+            foods,
+            key=lambda f: fuzz.token_sort_ratio(normalized_query, f["normalized_name"]),
+            reverse=True
+        )
+
+        # 3. Classify them
+        exact = None
+        next_best = None
+        similar = []
+
+        for match in matches:
+            score = fuzz.token_sort_ratio(normalized_query, match["normalized_name"])
+            if score == 100 and not exact:
+                exact = match
+            elif score >= 85 and not next_best:
+                next_best = match
+            else:
+                similar.append(match)
+
+        return exact, next_best, similar
+
+    except Exception as e:
+        print(f"Error fetching matches: {e}")
+        return None, None, []

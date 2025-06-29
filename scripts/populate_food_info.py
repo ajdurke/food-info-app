@@ -1,8 +1,9 @@
-import os
+import sys, os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import sqlite3
 from typing import List
 from food_project.database.sqlite_connector import get_connection, init_db
-from food_project.helpers.nutritionix_service import fetch_food_matches
+from food_project.database.nutritionix_service import fetch_food_matches
 
 # ==== CONFIGURATION ====
 DELETE_EXISTING = True  # Set to False to keep existing food_info data
