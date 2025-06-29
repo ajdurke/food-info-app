@@ -12,7 +12,7 @@ FOOD_LIST_FILE = "scripts/foods.txt"  # Path to file with food names (one per li
 def clear_existing_data(conn):
     with conn:
         conn.execute("DELETE FROM food_info")
-        print("✅ Cleared existing food_info data.")
+        print("Cleared existing food_info data.")
 
 def read_food_list(path: str) -> List[str]:
     if not os.path.exists(path):
@@ -65,24 +65,24 @@ def run():
     food_names = read_food_list(FOOD_LIST_FILE)
 
     for food_name in food_names:
-        print(f"\n🔍 Fetching matches for: {food_name}")
+        print(f"\n Fetching matches for: {food_name}")
         exact, next_best, others = fetch_food_matches(food_name)
 
         if exact and not already_exists(conn, exact["normalized_name"]):
             insert_entry(conn, exact, match_type="exact", approved=1)
-            print("✅ Inserted exact match")
+            print("Inserted exact match")
 
         if next_best and not already_exists(conn, next_best["normalized_name"]):
             insert_entry(conn, next_best, match_type="best", approved=None)
-            print("➕ Inserted next best match (pending review)")
+            print("Inserted next best match (pending review)")
 
         for alt in others:
             if not already_exists(conn, alt["normalized_name"]):
                 insert_entry(conn, alt, match_type="similar", approved=None)
-                print("➕ Inserted similar match (pending review)")
+                print("Inserted similar match (pending review)")
 
     conn.close()
-    print("\n🎉 Done populating food_info.")
+    print("\n Done populating food_info.")
 
 if __name__ == "__main__":
     run()
