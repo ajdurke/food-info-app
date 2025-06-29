@@ -1,15 +1,10 @@
 import streamlit as st
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import sqlite3
 import pandas as pd
+# ---------------
+from rapidfuzz import fuzz, process
 
-# --- Google Sheets client setup ---
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds_dict = st.secrets["google"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-client = gspread.authorize(creds)
-
-# --- Unit conversion map ---
+# --- Unit conversion map and aliases ---
 unit_conversion_to_grams = {
     "g": 1,
     "kg": 1000,
@@ -18,10 +13,33 @@ unit_conversion_to_grams = {
     "oz": 28.3495,
     "tbsp": 15,
     "tsp": 5,
-    "cup": 240,  # general average
+    "cup": 240,
 }
 
+unit_aliases = {
+    "pound": "lb",
+    "pounds": "lb",
+    "lbs": "lb",
+    "ounce": "oz",
+    "ounces": "oz",
+    "teaspoon": "tsp",
+    "teaspoons": "tsp",
+    "tablespoon": "tbsp",
+    "tablespoons": "tbsp",
+    "cups": "cup",
+    "count": None,
+    "sheet": None,
+}
+
+def normalize_unit(unit):
+    unit = unit.lower().strip()
+    return unit_aliases.get(unit, unit)
+
 def convert_to_grams(amount, unit):
+    unit = normalize_unit(unit)
+    if unit is None:
+        st.warning(f"Unit '{unit}' not recognized — skipping conversion.")
+        return None
     try:
         return float(amount) * unit_conversion_to_grams[unit]
     except KeyError:
@@ -31,14 +49,67 @@ def convert_to_grams(amount, unit):
         st.warning(f"Invalid amount '{amount}' — skipping.")
         return None
 
+def normalize_ingredient(name):
+    name = name.lower().strip()
+    modifiers = ["sliced", "chopped", "fresh", "salted","unsalted", "diced", "minced", "grated", "large", "small"]
+    words = name.split()
+    words = [word for word in words if word not in modifiers]
+    name = " ".join(words)
+
+    replacements = {
+        "all-purpose flour": "flour",
+        "yellow onion": "onion",
+        "whole milk": "milk",
+        "chicken breast or thighs": "chicken",
+
+    }
+    return replacements.get(name, name)
+
+@st.cache_data(ttl=300)
+def load_recipe_df():
+    """Load recipe and ingredient information from the SQLite database."""
+    conn = sqlite3.connect("food_info.db")
+    query = """
+        SELECT r.id AS recipe_id,
+               r.title AS recipe_title,
+               r.version,
+               r.source_url,
+               i.name  AS food_name,
+               i.amount AS quantity,
+               i.unit
+        FROM recipes r
+        JOIN ingredients i ON r.id = i.recipe_id
+    """
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    return df
+
+@st.cache_data(ttl=300)
+def load_food_data():
+    """Return headers and rows from the food_info table."""
+    conn = sqlite3.connect("food_info.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM food_info")
+    rows = cur.fetchall()
+    headers = [d[0] for d in cur.description]
+    conn.close()
+    return headers, [list(row) for row in rows]
+
+def match_ingredient(name, candidate_names, threshold=85):
+    match, score, _ = process.extractOne(name, candidate_names, scorer=fuzz.ratio)
+    if score >= threshold:
+        return match
+    return None
+
 def show_recipe_viewer():
-    """Render recipe dropdown and ingredient details."""
+    if st.button("Refresh Data"):
+        st.cache_data.clear()
+        st.rerun()
+
     try:
-        recipe_sheet = client.open("food_info_app").worksheet("recipes")
-        recipe_rows = recipe_sheet.get_all_records()
-        recipe_df = pd.DataFrame(recipe_rows)
+        recipe_df = load_recipe_df()
     except Exception as e:
-        st.error(f"Could not load recipe sheet: {e}")
+        st.error(f"Could not load recipe data: {e}")
         st.stop()
 
     recipe_titles = recipe_df["recipe_title"].unique().tolist()
@@ -50,10 +121,22 @@ def show_recipe_viewer():
         filtered = recipe_df[recipe_df["recipe_title"] == selected_recipe]
         st.subheader(f"Ingredients for: {selected_recipe}")
 
-        totals = {"calories": 0, "water_use_liters": 0, "cost_usd": 0}
+        ingredient_rows = []
+        totals = {}
+
+        try:
+            headers, food_rows = load_food_data()
+            normalized_food_map = {
+                normalize_ingredient(row[1]): row for row in food_rows if len(row) > 1
+            }
+            all_normalized_names = list(normalized_food_map.keys())
+        except Exception as e:
+            st.error(f"Could not load food data: {e}")
+            st.stop()
 
         for _, row in filtered.iterrows():
-            food = row["food_name"]
+            original_name = row["food_name"]
+            food = normalize_ingredient(original_name)
             qty = row["quantity"]
             unit = row["unit"]
 
@@ -61,52 +144,53 @@ def show_recipe_viewer():
             if qty_in_grams is None:
                 continue
 
-            try:
-                food_sheet = client.open("food_info_app").sheet1
-                food_names = food_sheet.col_values(2)
+            # Try exact match, then fuzzy match fallback
+            matched_name = food if food in normalized_food_map else match_ingredient(food, all_normalized_names)
 
-                if food in food_names:
-                    idx = food_names.index(food) + 1
-                    headers = food_sheet.row_values(1)
-                    values = food_sheet.row_values(idx)
+            if matched_name:
+                values = normalized_food_map[matched_name]
 
-                    food_data = dict(zip(headers, values))
+                row_data = {
+                    "ingredient": original_name,
+                    "quantity": f"{qty} {unit}",
+                    "grams": round(qty_in_grams, 2),
+                }
 
-                    st.markdown(
-                        f"**{food}** - {qty} {unit} ({round(qty_in_grams)}g)"
-                    )
+                food_data = dict(zip(headers, values))
 
-                    for field, val in food_data.items():
-                        if field == "food_name":
-                            continue
+                for field, val in food_data.items():
+                    if field == "food_name":
+                        continue
 
-                        display_val = val
+                    display_val = val
+                    numeric_val = None
+
+                    if val is not None:
                         try:
-                            num_val = float(val)
+                            numeric_val = float(val)
                             if field.endswith("_per_100g"):
-                                num_val = num_val * qty_in_grams / 100
+                                numeric_val = numeric_val * qty_in_grams / 100
+                            display_val = round(numeric_val, 2)
+                        except (ValueError, TypeError):
+                            pass  # Leave display_val as-is
 
-                                if field == "calories_per_100g":
-                                    totals["calories"] += num_val
-                                elif field == "water_use_liters_per_100g":
-                                    totals["water_use_liters"] += num_val
-                                elif field == "cost_per_100g_usd":
-                                    totals["cost_usd"] += num_val
+                    row_data[field] = display_val
+                    if numeric_val is not None:
+                        totals[field] = totals.get(field, 0) + numeric_val
 
-                            display_val = round(num_val, 2)
-                        except ValueError:
-                            pass
 
-                        st.write(f"{field}: {display_val}")
+                ingredient_rows.append(row_data)
+            else:
+                st.warning(f"{original_name} not found in food info database.")
 
-                    st.divider()
-                else:
-                    st.warning(f"{food} not found in food info sheet.")
-
-            except Exception as e:
-                st.warning(f"Error looking up {food}: {e}")
-
-        st.subheader("🔢 Total Recipe Impact")
-        st.write(f"**Calories:** {round(totals['calories'])} kcal")
-        st.write(f"**Water Use:** {round(totals['water_use_liters'])} L")
-        st.write(f"**Cost:** ${round(totals['cost_usd'], 2)}")
+        if ingredient_rows:
+            df = pd.DataFrame(ingredient_rows)
+            totals_row = {col: "" for col in df.columns}
+            totals_row["ingredient"] = "Total"
+            for key, value in totals.items():
+                if key in df.columns:
+                    totals_row[key] = round(value, 2)
+            df = pd.concat([df, pd.DataFrame([totals_row])], ignore_index=True)
+            st.dataframe(df)
+        else:
+            st.info("No ingredients found for this recipe.")

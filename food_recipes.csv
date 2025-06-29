@@ -1,0 +1,46 @@
+recipe_id,recipe_title,version,source_url,food_name,quantity,unit
+1,Simple Mexican Quinoa,1,https://www.allrecipes.com/recipe/242110/simple-mexican-quinoa/,water,2,cups
+1,Simple Mexican Quinoa,1,https://www.allrecipes.com/recipe/242110/simple-mexican-quinoa/,quinoa,1,cup
+1,Simple Mexican Quinoa,1,https://www.allrecipes.com/recipe/242110/simple-mexican-quinoa/,frozen corn and black bean vegetable blend,12,ounces
+2,Kadai Chicken,1,https://www.allrecipes.com/recipe/246849/kadai-chicken/,vegetable oil,5,teaspoons
+2,Kadai Chicken,1,https://www.allrecipes.com/recipe/246849/kadai-chicken/,dried red chile peppers,7,count
+2,Kadai Chicken,1,https://www.allrecipes.com/recipe/246849/kadai-chicken/,tomatoes,5,count
+2,Kadai Chicken,1,https://www.allrecipes.com/recipe/246849/kadai-chicken/,boneless chicken breasts,4,count
+3,Chicken Pot Pie,1,https://sallysbakingaddiction.com/double-crust-chicken-pot-pie/,chicken breast or thighs,1,pound
+3,Chicken Pot Pie,1,https://sallysbakingaddiction.com/double-crust-chicken-pot-pie/,sliced carrots,1,cup
+3,Chicken Pot Pie,1,https://sallysbakingaddiction.com/double-crust-chicken-pot-pie/,sliced celery,0.5,cup
+3,Chicken Pot Pie,1,https://sallysbakingaddiction.com/double-crust-chicken-pot-pie/,unsalted butter,0.33,cup
+3,Chicken Pot Pie,1,https://sallysbakingaddiction.com/double-crust-chicken-pot-pie/,chopped yellow onion,0.33,cup
+3,Chicken Pot Pie,1,https://sallysbakingaddiction.com/double-crust-chicken-pot-pie/,minced garlic,1,teaspoon
+3,Chicken Pot Pie,1,https://sallysbakingaddiction.com/double-crust-chicken-pot-pie/,all‑purpose flour,0.33,cup
+3,Chicken Pot Pie,1,https://sallysbakingaddiction.com/double-crust-chicken-pot-pie/,salt,0.75,teaspoon
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,boneless chicken breasts,1,pound
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,butter,0.33,cup
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,celery,0.5,cup
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,onion,0.33,cup
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,all‑purpose flour,0.33,cup
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,salt,0.5,teaspoon
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,pepper,0.25,teaspoon
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,garlic powder,0.5,teaspoon
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,chicken bouillon paste,1,teaspoon
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,milk,1,cup
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,frozen veggies,8,ounces
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,egg,1,count
+4,Chicken Pot Pie,1,https://tastesbetterfromscratch.com/chicken-pot-pie/ ,milk (for egg wash),1,tablespoon
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,unsalted butter,8,tablespoons
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,white onion,1,count
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,celery stalks,3,count
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,garlic cloves,3,count
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,all‑purpose flour,0.5,cup
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,chicken stock,3,cups
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,whole milk,0.5,cup
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,rotisserie chicken (shredded),1,count
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,frozen peas and carrots,2,cups
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,fresh rosemary,1.5,teaspoons
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,fresh thyme,1.5,teaspoons
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,fresh sage,1.5,teaspoons
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,kosher salt,0.5,teaspoon
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,black pepper,0.25,teaspoon
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,puff pastry sheet,1,sheet
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,egg yolk,1,count
+5,Chicken Pot Pie,2,https://www.simplyrecipes.com/recipes/easy_chicken_pot_pie/ ,water,1,tablespoon
