@@ -89,7 +89,7 @@ def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None
     cur.execute("SELECT * FROM food_info WHERE normalized_name = ?", (normalized,))
     row = cur.fetchone()
     if row:
-        result = dict(row)
+        result = dict(zip(row.keys(), row))
     else:
         try:
             fetched = _fetch_from_api(food_name)
@@ -127,7 +127,7 @@ def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None
             conn.commit()
             cur.execute("SELECT * FROM food_info WHERE normalized_name = ?", (normalized,))
             row = cur.fetchone()
-            result = dict(row) if row else None
+            result = dict(zip(row.keys(), row)) if row else None
         else:
             result = None
     if created:
