@@ -9,15 +9,17 @@ try:
     import streamlit as st
     NUTRITIONIX_APP_ID = st.secrets["nutritionix"]["app_id"]
     NUTRITIONIX_API_KEY = st.secrets["nutritionix"]["api_key"]
+    print("Using Streamlit secrets for Nutritionix credentials")
 except Exception:
     from dotenv import load_dotenv
     load_dotenv()
     NUTRITIONIX_APP_ID = os.getenv("NUTRITIONIX_APP_ID")
     NUTRITIONIX_API_KEY = os.getenv("NUTRITIONIX_API_KEY")
-
+    print("Using environment variables from .env for Nutritionix credentials")
 
 if not NUTRITIONIX_APP_ID or not NUTRITIONIX_API_KEY:
     raise Exception("Nutritionix credentials not set in secrets.toml or .env")
+
 
 API_URL = "https://trackapi.nutritionix.com/v2/natural/nutrients"
 
