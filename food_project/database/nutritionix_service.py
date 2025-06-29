@@ -144,6 +144,7 @@ def fetch_food_matches(query: str):
         headers = {
             "x-app-id": NUTRITIONIX_APP_ID,
             "x-app-key": NUTRITIONIX_API_KEY,
+            "Content-Type": "application/json"
         }
         response = requests.post(API_URL, json={"query": query}, headers=headers, timeout=10)
         response.raise_for_status()
