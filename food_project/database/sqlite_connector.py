@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path("data/food_info.db")
+DB_PATH = Path("food_info.db")
 
 def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
     """Return a connection to the SQLite database."""
@@ -88,14 +88,14 @@ def save_recipe_and_ingredients(recipe_data: dict) -> int:
     cur = conn.cursor()
 
     cur.execute(
-        "INSERT INTO recipes (recipe_title, source_url) VALUES (?, ?)",
+        "INSERT INTO recipes (title, source_url) VALUES (?, ?)",
         (recipe_data.get("title"), recipe_data.get("url")),
     )
     recipe_id = cur.lastrowid
 
     for ingredient in recipe_data.get("ingredients", []):
         cur.execute(
-            "INSERT INTO ingredients (recipe_id, food_name, quantity, unit) VALUES (?, ?, ?, ?)",
+            "INSERT INTO ingredients (recipe_id, name, amount, unit) VALUES (?, ?, ?, ?)",
             (recipe_id, ingredient, None, None),
         )
 
