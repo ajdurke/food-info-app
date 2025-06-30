@@ -1,27 +1,24 @@
 import sqlite3
+import argparse
+from pathlib import Path
 from food_project.processing.matcher import fetch_db_food_matches
 from food_project.processing.normalization import normalize_food_name
 
-DB_PATH = "food_info.db"
-
-def match_ingredients():
-    conn = sqlite3.connect(DB_PATH)
+def match_ingredients(db_path="food_info.db"):
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    # Add required columns if not already present
+    # Add columns if they don't exist yet
     try:
         cur.execute("ALTER TABLE ingredients ADD COLUMN fuzz_score REAL")
-    except:
-        pass
+    except: pass
     try:
         cur.execute("ALTER TABLE ingredients ADD COLUMN match_type TEXT")
-    except:
-        pass
+    except: pass
     try:
         cur.execute("ALTER TABLE ingredients ADD COLUMN matched_food_id INTEGER")
-    except:
-        pass
+    except: pass
 
     ingredients = cur.execute("""
         SELECT id, normalized_name FROM ingredients
@@ -38,7 +35,7 @@ def match_ingredients():
         if not ing_name:
             continue
 
-        exact, next_best, similar = fetch_db_food_matches(ing_name)
+        exact, next_best, similar = fetch_db_food_matches(ing_name, db_path)
 
         if exact:
             match_name = exact
@@ -65,5 +62,12 @@ def match_ingredients():
     conn.close()
     print(f"✅ Matched {total} ingredient(s).")
 
+def main():
+    parser = argparse.ArgumentParser(description="Match ingredients to food_info entries")
+    parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")
+    args = parser.parse_args()
+
+    match_ingredients(db_path=args.db)
+
 if __name__ == "__main__":
-    match_ingredients()
+    main()

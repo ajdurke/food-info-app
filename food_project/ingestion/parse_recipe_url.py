@@ -1,10 +1,6 @@
+import argparse
 from recipe_scrapers import scrape_me
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 from food_project.database.sqlite_connector import save_recipe_and_ingredients
-
-
 
 def parse_recipe(url: str) -> dict:
     scraper = scrape_me(url)
@@ -13,24 +9,25 @@ def parse_recipe(url: str) -> dict:
         "ingredients": scraper.ingredients(),
         "instructions": scraper.instructions(),
         "raw_html": scraper.to_json(),  # optional backup
+        "url": url
     }
 
-# Example usage
-if __name__ == "__main__":
-    url = "https://www.foodnetwork.com/recipes/food-network-kitchen/instant-pot-keto-mediterranean-chicken-5500679"
-    result = parse_recipe(url)
-    result["url"] = url  # Add the URL so it can be saved
+def main():
+    parser = argparse.ArgumentParser(description="Scrape a recipe from a URL and save to database")
+    parser.add_argument("--url", required=True, help="Recipe URL to scrape")
+    parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")
+    args = parser.parse_args()
 
-    # Save to database
-    recipe_id = save_recipe_and_ingredients(result)
+    print(f"🔍 Scraping: {args.url}")
+    recipe_data = parse_recipe(args.url)
 
-    # Confirm
-    print(f"\n✅ Saved recipe '{result['title']}' (ID: {recipe_id}) with {len(result['ingredients'])} ingredients.\n")
-
-    print("🧾 Ingredients:")
-    for ing in result["ingredients"]:
+    print(f"📝 Title: {recipe_data['title']}")
+    print(f"🧾 Found {len(recipe_data['ingredients'])} ingredients")
+    for ing in recipe_data['ingredients']:
         print(f" - {ing}")
 
-    print("\n📋 Instructions:")
-    print(result["instructions"])
+    recipe_id = save_recipe_and_ingredients(recipe_data, db_path=args.db)
+    print(f"\n✅ Saved to {args.db} as recipe ID: {recipe_id}")
 
+if __name__ == "__main__":
+    main()

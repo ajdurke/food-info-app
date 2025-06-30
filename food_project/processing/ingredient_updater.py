@@ -1,21 +1,30 @@
-import sys
 import sqlite3
+import argparse
+from pathlib import Path
 from food_project.processing.normalization import parse_ingredient
 
-DB_PATH = "food_info.db"
-
-def update_ingredients(force=False):
-    conn = sqlite3.connect(DB_PATH)
+def update_ingredients(force=False, db_path="food_info.db"):
+    conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
-    try:
-        cur.execute("ALTER TABLE ingredients ADD COLUMN estimated_grams REAL")
-    except: pass
-    try:
-        cur.execute("ALTER TABLE ingredients ADD COLUMN fuzz_score REAL")
-    except: pass
+    # Add required columns if not already present
+    for column_def in [
+        "ALTER TABLE ingredients ADD COLUMN amount REAL",
+        "ALTER TABLE ingredients ADD COLUMN unit TEXT",
+        "ALTER TABLE ingredients ADD COLUMN normalized_name TEXT",
+        "ALTER TABLE ingredients ADD COLUMN estimated_grams REAL",
+        "ALTER TABLE ingredients ADD COLUMN fuzz_score REAL"
+    ]:
+        try:
+            cur.execute(column_def)
+        except sqlite3.OperationalError:
+            pass  # Column already exists
 
-    rows = cur.execute("SELECT id, name FROM ingredients" + ("" if force else " WHERE normalized_name IS NULL")).fetchall()
+    query = "SELECT id, food_name FROM ingredients"
+    if not force:
+        query += " WHERE normalized_name IS NULL"
+
+    rows = cur.execute(query).fetchall()
 
     updated = 0
     for ing_id, raw_text in rows:
@@ -31,5 +40,13 @@ def update_ingredients(force=False):
     conn.close()
     print(f"✅ Updated {updated} ingredient(s). {'(forced)' if force else '(new only)'}")
 
+def main():
+    parser = argparse.ArgumentParser(description="Update parsed ingredient data")
+    parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")
+    parser.add_argument("--force", action="store_true", help="Force reprocessing of all ingredients")
+    args = parser.parse_args()
+
+    update_ingredients(force=args.force, db_path=args.db)
+
 if __name__ == "__main__":
-    update_ingredients(force="--force" in sys.argv)
+    main()
