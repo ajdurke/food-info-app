@@ -1,17 +1,25 @@
 import sqlite3
-from rapidfuzz import fuzz
+from food_project.processing.matcher import fetch_db_food_matches
 from food_project.processing.normalization import normalize_food_name
 
 DB_PATH = "food_info.db"
 
 def match_ingredients():
     conn = sqlite3.connect(DB_PATH)
-    cur = conn.cursor()
     conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
 
-    # Add column for fuzz_score if not exists
+    # Add required columns if not already present
     try:
         cur.execute("ALTER TABLE ingredients ADD COLUMN fuzz_score REAL")
+    except:
+        pass
+    try:
+        cur.execute("ALTER TABLE ingredients ADD COLUMN match_type TEXT")
+    except:
+        pass
+    try:
+        cur.execute("ALTER TABLE ingredients ADD COLUMN matched_food_id INTEGER")
     except:
         pass
 
@@ -26,36 +34,31 @@ def match_ingredients():
 
     total = 0
     for ing in ingredients:
-        ing_id, ing_name = ing
+        ing_id, ing_name = ing["id"], ing["normalized_name"]
         if not ing_name:
             continue
 
-        # Check for exact match first
-        exact = next((f for f in food_entries if f["normalized_name"] == ing_name), None)
+        exact, next_best, similar = fetch_db_food_matches(ing_name)
+
         if exact:
+            match_name = exact
+            match_type = "exact"
+            fuzz_score = 100
+        elif next_best:
+            match_name = next_best
+            match_type = "fuzzy"
+            match_tuple = next((m for m in similar if m[0] == next_best), None)
+            fuzz_score = match_tuple[1] if match_tuple else 80
+        else:
+            continue  # no match found
+
+        match_row = next((f for f in food_entries if f["normalized_name"] == match_name), None)
+        if match_row:
             cur.execute("""
                 UPDATE ingredients
                 SET matched_food_id = ?, match_type = ?, fuzz_score = ?
                 WHERE id = ?
-            """, (exact["id"], "exact", 100, ing_id))
-            total += 1
-            continue
-
-        # Otherwise, try fuzzy matching
-        best_match = None
-        best_score = 0
-        for food in food_entries:
-            score = fuzz.token_sort_ratio(ing_name, food["normalized_name"])
-            if score > best_score:
-                best_score = score
-                best_match = food
-
-        if best_match and best_score >= 85:
-            cur.execute("""
-                UPDATE ingredients
-                SET matched_food_id = ?, match_type = ?, fuzz_score = ?
-                WHERE id = ?
-            """, (best_match["id"], "fuzzy", best_score, ing_id))
+            """, (match_row["id"], match_type, fuzz_score, ing_id))
             total += 1
 
     conn.commit()
