@@ -1,6 +1,5 @@
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import sqlite3
 from food_project.database.nutritionix_service import get_nutrition_data
 
