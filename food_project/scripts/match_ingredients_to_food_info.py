@@ -1,6 +1,6 @@
 import sqlite3
 from rapidfuzz import fuzz
-from food_project.utils.normalization import normalize_food_name
+from food_project.processing.normalization import normalize_food_name
 
 DB_PATH = "food_info.db"
 

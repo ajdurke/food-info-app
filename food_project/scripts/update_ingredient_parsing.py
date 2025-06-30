@@ -1,7 +1,7 @@
 import sqlite3
 import re
 import sys
-from food_project.utils.normalization import normalize_food_name
+from food_project.processing.normalization import normalize_food_name
 import inflect
 
 p = inflect.engine()

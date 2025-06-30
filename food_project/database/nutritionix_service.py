@@ -3,7 +3,7 @@ import sqlite3
 from typing import Optional, Dict, Any
 import requests
 from .sqlite_connector import get_connection, init_db
-from food_project.utils.normalization import normalize_food_name
+from food_project.processing.normalization import normalize_food_name
 from dotenv import load_dotenv
 
 try:
