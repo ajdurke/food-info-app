@@ -17,7 +17,7 @@ def parse_recipe(url: str) -> dict:
 
 # Example usage
 if __name__ == "__main__":
-    url = "https://www.allrecipes.com/recipe/231282/hearty-italian-meatball-soup/"
+    url = "https://www.bonappetit.com/recipe/cumin-lamb-potato-wontons"
     result = parse_recipe(url)
     result["url"] = url  # Add the URL so it can be saved
 
