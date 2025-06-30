@@ -1,6 +1,9 @@
 import streamlit as st
 import sqlite3
 from food_project.ui import recipe_viewer
+from food_project.processing.ingredient_updater import update_ingredients
+from food_project.scripts.match_ingredients_to_food_info import match_ingredients
+
 
 try:
     app_id = st.secrets["nutritionix"]["app_id"]
@@ -47,6 +50,20 @@ if branch == "staging":
     st.title("Food Info Tracker - Staging Branch")
 else:
     st.title("Food Info Tracker")
+
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("🔄 Re-parse Ingredients"):
+        with st.spinner("Re-parsing ingredients..."):
+            update_ingredients(force=True)
+        st.success("✅ Ingredients re-parsed!")
+
+with col2:
+    if st.button("🔄 Re-match Ingredients"):
+        with st.spinner("Re-matching ingredients..."):
+            match_ingredients()
+        st.success("✅ Ingredients re-matched!")
+
 
 # -------------------------------
 # Food dropdown
