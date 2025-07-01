@@ -22,16 +22,15 @@ def read_food_list(path: str):
     with open(path, encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip()]
 
-def fetch_and_insert(conn, food_name: str) -> bool:
+def fetch_and_insert(conn, food_name: str, use_mock=False) -> bool:
     """
     Fetch and insert food data from Nutritionix. Return True if inserted.
     """
     print(f"🔍 Inserting {food_name}...")
-    food_data = get_nutrition_data(food_name, conn)
+    food_data = get_nutrition_data(food_name, conn, use_mock=use_mock)
     if not food_data:
         print(f"❌ No data found for: {food_name}")
         return False
-    print(f"💾 Committed: {food_data['normalized_name']}")
     print(f"✅ Inserted: {food_data['normalized_name']}")
     return True
 
@@ -42,13 +41,17 @@ def main():
     parser.add_argument("--clear", action="store_true", help="Delete existing food_info entries")
     parser.add_argument("--max", type=int, default=MAX_API_CALLS, help="Max API calls to use")
     parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")
+    parser.add_argument("--mock", action="store_true", help="Use mocked data instead of API")
+    parser.add_argument("--init", action="store_true", help="Recreate DB schema (drops data!)")
     args = parser.parse_args()
 
     db_path = Path(args.db)
     print(f"📍 Using database at: {db_path.resolve()}")
 
     conn = get_connection(db_path)
-    init_db(conn)
+    if args.init:
+        print("⚠️ Reinitializing database schema via init_db()")
+        init_db(conn)
 
     if args.clear:
         clear_existing_data(conn)
@@ -65,7 +68,7 @@ def main():
             print("🔁 Reached API limit.")
             break
 
-        if fetch_and_insert(conn, food):
+        if fetch_and_insert(conn, food, use_mock=args.mock):
             used += 1
 
         # Show partial DB state

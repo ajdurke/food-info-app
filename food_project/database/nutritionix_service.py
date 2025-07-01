@@ -3,8 +3,7 @@ import sqlite3
 from typing import Optional, Dict, Any
 import requests
 from dotenv import load_dotenv
-
-from .sqlite_connector import get_connection
+from .sqlite_connector import get_connection, init_db
 from food_project.processing.normalization import normalize_food_name
 
 # -----------------------------------------
@@ -39,113 +38,88 @@ def _fetch_from_api(query: str) -> Dict[str, Any]:
 # -----------------------------------------
 # 🍽 Main function to get nutrition data
 # -----------------------------------------
-def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None) -> Optional[Dict[str, Any]]:
+def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None, use_mock: bool = False) -> Optional[Dict[str, Any]]:
     """
-    1. Normalize the food name
-    2. Look up in DB by normalized_name
-    3. If not present, call Nutritionix API
-    4. Insert result into DB (safely)
-    5. Return data
+    This function does 4 things:
+    1. Normalize the food name (e.g., "apples" -> "apple")
+    2. Check if it's already in the food_info table
+    3. If not, fetch from API or mocked data
+    4. Save and return the result
     """
     normalized = normalize_food_name(food_name)
 
+    # Use passed-in connection or create a new one
     created = False
     if conn is None:
         conn = get_connection()
         created = True
 
     conn.row_factory = sqlite3.Row
+
     cur = conn.cursor()
-
-    # ✅ Ensure table exists, but don’t wipe it
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS food_info (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            raw_name TEXT NOT NULL,
-            normalized_name TEXT NOT NULL UNIQUE,
-            serving_qty TEXT,
-            serving_unit TEXT,
-            serving_weight_grams REAL,
-            calories REAL,
-            fat REAL,
-            saturated_fat REAL,
-            cholesterol REAL,
-            sodium REAL,
-            carbs REAL,
-            fiber REAL,
-            sugars REAL,
-            protein REAL,
-            potassium REAL,
-            match_type TEXT,
-            approved INTEGER
-        )
-    """)
-
     cur.execute("SELECT * FROM food_info WHERE normalized_name = ?", (normalized,))
     row = cur.fetchone()
     if row:
-        return dict(zip(row.keys(), row))  # ✅ Already in DB
+        return dict(zip(row.keys(), row))
 
-    # 🚫 If not found, hit Nutritionix API
-    try:
-        print(f"⚠️ Mocking Nutritionix API for '{food_name}'")  # You can replace this with `_fetch_from_api()` to use the real API
-        fetched = {
+    # Optionally use mock data
+    if use_mock:
+        print(f"⚠️ Mocking Nutritionix API for '{food_name}'")
+        mock_data = {
             "food_name": food_name,
-            "serving_qty": 1,
-            "serving_unit": "mock_unit",
+            "serving_qty": 100,
+            "serving_unit": "g",
             "serving_weight_grams": 100,
-            "nf_calories": 0,
-            "nf_total_fat": 0,
-            "nf_saturated_fat": 0,
+            "nf_calories": 100,
+            "nf_total_fat": 1,
+            "nf_saturated_fat": 0.2,
             "nf_cholesterol": 0,
-            "nf_sodium": 0,
-            "nf_total_carbohydrate": 0,
-            "nf_dietary_fiber": 0,
-            "nf_sugars": 0,
-            "nf_protein": 0,
-            "nf_potassium": 0,
+            "nf_sodium": 10,
+            "nf_total_carbohydrate": 20,
+            "nf_dietary_fiber": 3,
+            "nf_sugars": 15,
+            "nf_protein": 1,
+            "nf_potassium": 200,
         }
-        # fetched = _fetch_from_api(food_name)  # ← uncomment to use real API
-    except Exception as e:
-        print(f"❌ API fetch failed for '{food_name}': {e}")
-        return None
+    else:
+        try:
+            mock_data = _fetch_from_api(food_name)
+        except Exception as e:
+            print(f"❌ API fetch failed for '{food_name}': {e}")
+            return None
 
-    # Insert into DB
-    try:
-        with conn:
-            conn.execute("""
-                INSERT INTO food_info (
-                    raw_name, normalized_name, serving_qty, serving_unit,
-                    serving_weight_grams, calories, fat, saturated_fat, cholesterol,
-                    sodium, carbs, fiber, sugars, protein, potassium
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                food_name,
-                normalized,
-                fetched.get("serving_qty"),
-                fetched.get("serving_unit"),
-                fetched.get("serving_weight_grams"),
-                fetched.get("nf_calories"),
-                fetched.get("nf_total_fat"),
-                fetched.get("nf_saturated_fat"),
-                fetched.get("nf_cholesterol"),
-                fetched.get("nf_sodium"),
-                fetched.get("nf_total_carbohydrate"),
-                fetched.get("nf_dietary_fiber"),
-                fetched.get("nf_sugars"),
-                fetched.get("nf_protein"),
-                fetched.get("nf_potassium"),
-            ))
-        print(f"💾 Committed: {normalized}")
-    except Exception as e:
-        print(f"❌ Failed to insert '{food_name}' into DB: {e}")
-        return None
+    norm = normalize_food_name(mock_data["food_name"])
+    with conn:
+        conn.execute("""
+            INSERT INTO food_info (
+                raw_name, normalized_name, serving_qty, serving_unit,
+                serving_weight_grams, calories, fat, saturated_fat, cholesterol,
+                sodium, carbs, fiber, sugars, protein, potassium
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            food_name,
+            norm,
+            mock_data.get("serving_qty"),
+            mock_data.get("serving_unit"),
+            mock_data.get("serving_weight_grams"),
+            mock_data.get("nf_calories"),
+            mock_data.get("nf_total_fat"),
+            mock_data.get("nf_saturated_fat"),
+            mock_data.get("nf_cholesterol"),
+            mock_data.get("nf_sodium"),
+            mock_data.get("nf_total_carbohydrate"),
+            mock_data.get("nf_dietary_fiber"),
+            mock_data.get("nf_sugars"),
+            mock_data.get("nf_protein"),
+            mock_data.get("nf_potassium"),
+        ))
 
-    cur.execute("SELECT * FROM food_info WHERE normalized_name = ?", (normalized,))
+    # Re-fetch the inserted row
+    cur.execute("SELECT * FROM food_info WHERE normalized_name = ?", (norm,))
     row = cur.fetchone()
     result = dict(zip(row.keys(), row)) if row else None
 
     if created:
         conn.close()
-
     return result
+
