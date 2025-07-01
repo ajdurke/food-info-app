@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 from food_project.ui import recipe_viewer
 from food_project.processing.ingredient_updater import update_ingredients
-from food_project.scripts.match_ingredients_to_food_info import match_ingredients
+from food_project.ingestion.match_ingredients_to_food_info import match_ingredients
 
 
 try:
