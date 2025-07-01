@@ -1,3 +1,5 @@
+"""Simple fuzzy matching helpers for ingredient names."""
+
 from rapidfuzz import fuzz
 import sqlite3
 
@@ -14,6 +16,7 @@ def fetch_food_matches(normalized_name: str, options: list[str], score_threshold
     similar = []
 
     for option in options:
+        # rapidfuzz returns a similarity score between 0 and 100
         score = fuzz.token_sort_ratio(normalized_name, option)
         if score >= score_threshold:
             similar.append((option, score))
@@ -24,14 +27,14 @@ def fetch_food_matches(normalized_name: str, options: list[str], score_threshold
     return exact_match, best_match if best_match != exact_match else None, similar
 
 def fetch_db_food_matches(ingredient_name: str, db_path="food_info.db"):
-    """
-    Look up matching food_info entries for a given ingredient name.
-    Returns: (exact_match, next_best, similar_matches_with_scores)
-    """
+    """Look up possible matches for ``ingredient_name`` in the database."""
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
-    cur.execute("SELECT DISTINCT normalized_name FROM food_info WHERE normalized_name IS NOT NULL")
+    cur.execute(
+        "SELECT DISTINCT normalized_name FROM food_info WHERE normalized_name IS NOT NULL"
+    )
     all_foods = [row[0] for row in cur.fetchall()]
     conn.close()
 
+    # Delegate to ``fetch_food_matches`` which does the fuzzy matching
     return fetch_food_matches(ingredient_name, all_foods)

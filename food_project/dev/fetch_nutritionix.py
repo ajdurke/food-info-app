@@ -1,8 +1,11 @@
+"""Command line helper to fetch nutrition data for a single item."""
+
 import argparse
 from food_project.database.nutritionix_service import get_nutrition_data
 
 
 def main() -> None:
+    """Parse arguments and print nutrition data returned by the API."""
     parser = argparse.ArgumentParser(description="Fetch nutrition data and store in SQLite")
     parser.add_argument("food", help="Food item to search")
     args = parser.parse_args()

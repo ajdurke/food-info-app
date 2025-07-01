@@ -1,8 +1,11 @@
+"""Console workflow for manually reviewing ingredient matches."""
+
 import argparse
 from food_project.database.sqlite_connector import get_connection, init_db
 from pathlib import Path
 
 def review_matches(db_path: str, init: bool = False) -> None:
+    """Walk through unmatched ingredients and approve or reject matches."""
     conn = get_connection(Path(db_path))
     if init:
         print("⚙️ init_db() is recreating the food_info table")
@@ -10,7 +13,7 @@ def review_matches(db_path: str, init: bool = False) -> None:
 
     cur = conn.cursor()
 
-    # Add new columns if missing
+    # Ensure our table has columns to track the review status
     for col_def in [
         "ALTER TABLE ingredients ADD COLUMN match_reviewed BOOLEAN",
         "ALTER TABLE ingredients ADD COLUMN review_outcome TEXT"
@@ -20,7 +23,7 @@ def review_matches(db_path: str, init: bool = False) -> None:
         except Exception:
             pass  # Ignore if column already exists
 
-    # Get ingredients with fuzzy matches
+    # Load any ingredients that were auto-matched using fuzzy logic
     fuzzy_matches = cur.execute("""
         SELECT i.id, i.food_name AS raw_name, i.normalized_name, i.fuzz_score, f.normalized_name AS matched_food
         FROM ingredients i
@@ -41,6 +44,7 @@ def review_matches(db_path: str, init: bool = False) -> None:
         print("----------------------------")
         print("Options: [y]es (approve), [n]o (reject), [m]anual override, [s]kip")
 
+        # Prompt the reviewer for a decision
         choice = input("Your choice: ").strip().lower()
 
         if choice == "y":
@@ -64,6 +68,7 @@ def review_matches(db_path: str, init: bool = False) -> None:
             print("❌ Match removed.")
 
         elif choice == "m":
+            # Let the reviewer manually specify the correct normalized name
             new_match = input("Enter new food_info.normalized_name: ").strip().lower()
             match_row = cur.execute("SELECT id FROM food_info WHERE normalized_name = ?", (new_match,)).fetchone()
             if match_row:
@@ -90,6 +95,7 @@ def review_matches(db_path: str, init: bool = False) -> None:
     print("\n🎉 Done reviewing fuzzy matches.")
 
 def main():
+    # Simple command line wrapper around ``review_matches``
     parser = argparse.ArgumentParser(description="Review fuzzy matches between ingredients and food_info.")
     parser.add_argument("--db", default="food_info.db", help="SQLite database path")
     parser.add_argument("--init", action="store_true", help="Recreate food_info table (destructive)")
