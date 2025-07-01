@@ -38,28 +38,39 @@ def _fetch_from_api(query: str) -> Dict[str, Any]:
 # -----------------------------------------
 # 🍽 Main function to get nutrition data
 # -----------------------------------------
-def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None, use_mock: bool = False) -> Optional[Dict[str, Any]]:
+def get_nutrition_data(
+    food_name: str,
+    conn: Optional[sqlite3.Connection] = None,
+    use_mock: bool = False,
+    skip_if_exists: bool = False
+) -> Optional[Dict[str, Any]]:
     """
-    This function does 4 things:
-    1. Normalize the food name (e.g., "apples" -> "apple")
-    2. Check if it's already in the food_info table
-    3. If not, fetch from API or mocked data
-    4. Save and return the result
+    Fetch and store nutrition data for a food item unless already present.
+
+    Parameters:
+        - food_name: str
+        - conn: Optional SQLite connection
+        - use_mock: Use mock data instead of API
+        - skip_if_exists: Return existing data if present, skip API call and DB insert
+
+    Returns:
+        - dict of food data if successful or already present, None otherwise
     """
     normalized = normalize_food_name(food_name)
 
-    # Use passed-in connection or create a new one
     created = False
     if conn is None:
         conn = get_connection()
         created = True
 
     conn.row_factory = sqlite3.Row
-
     cur = conn.cursor()
+
     cur.execute("SELECT * FROM food_info WHERE normalized_name = ?", (normalized,))
     row = cur.fetchone()
     if row:
+        if skip_if_exists:
+            print(f"⏩ Skipped (already exists in DB): {normalized}")
         return dict(zip(row.keys(), row))
 
     # Optionally use mock data
@@ -114,12 +125,11 @@ def get_nutrition_data(food_name: str, conn: Optional[sqlite3.Connection] = None
             mock_data.get("nf_potassium"),
         ))
 
-    # Re-fetch the inserted row
     cur.execute("SELECT * FROM food_info WHERE normalized_name = ?", (norm,))
     row = cur.fetchone()
     result = dict(zip(row.keys(), row)) if row else None
 
     if created:
         conn.close()
-    return result
 
+    return result

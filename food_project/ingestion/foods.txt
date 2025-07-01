@@ -1,3 +1,135 @@
-apple
-banana
-orange
+oat milk
+yogurt
+greek yogurt
+cheddar cheese
+mozzarella cheese
+parmesan cheese
+ricotta
+cream cheese
+butter
+margarine
+ice cream
+whipped cream
+half and half
+sour cream
+egg
+egg white
+egg yolk
+olive oil
+canola oil
+vegetable oil
+coconut oil
+avocado oil
+shortening
+lard
+mayonnaise
+dark chocolate
+milk chocolate
+chips
+pretzels
+ketchup
+mustard
+ranch dressing
+vinaigrette
+caesar dressing
+soy sauce
+sriracha
+hot sauce
+barbecue sauce
+honey mustard
+buffalo sauce
+teriyaki sauce
+tahini
+hummus
+salsa
+guacamole
+relish
+gravy
+pesto
+kimchi
+falafel
+tabbouleh
+tzatziki
+plantain
+cassava
+yuca
+fufu
+injera
+jollof rice
+coffee
+black tea
+green tea
+cola
+orange juice
+apple juice
+grape juice
+lemonade
+salt
+black pepper
+sugar
+brown sugar
+honey
+maple syrup
+molasses
+baking soda
+baking powder
+cornstarch
+yeast
+flour
+whole wheat flour
+all-purpose flour
+gluten-free flour
+spaghetti squash
+acorn squash
+butternut squash
+cabbage
+bok choy
+collard greens
+swiss chard
+turnip greens
+mustard greens
+watercress
+endive
+radicchio
+cress
+arctic char
+halibut
+sea bass
+tilapia
+pollock
+mullet
+anchovy
+caviar
+seaweed
+nori
+kombu
+wakame
+kelp
+spirulina
+chlorella
+chia seeds
+flaxseeds
+pumpkin seeds
+sunflower seeds
+safflower seeds
+sesame seeds
+hemp seeds
+poppy seeds
+caraway seeds
+cumin seeds
+fennel seeds
+coriander seeds
+coconut milk
+almond butter
+peanut butter
+cashew butter
+hazelnut spread
+sunflower seed butter
+tahini paste
+nutella
+granola
+muesli
+corn chips
+tortilla chips
+pita chips
+veggie chips

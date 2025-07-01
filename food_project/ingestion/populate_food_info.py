@@ -22,12 +22,17 @@ def read_food_list(path: str):
     with open(path, encoding="utf-8") as f:
         return [line.strip() for line in f if line.strip()]
 
-def fetch_and_insert(conn, food_name: str, use_mock=False) -> bool:
+def fetch_and_insert(conn, food_name: str, use_mock=False, skip_existing=False) -> bool:
     """
     Fetch and insert food data from Nutritionix. Return True if inserted.
     """
     print(f"🔍 Inserting {food_name}...")
-    food_data = get_nutrition_data(food_name, conn, use_mock=use_mock)
+    food_data = get_nutrition_data(
+        food_name,
+        conn,
+        use_mock=use_mock,
+        skip_if_exists=skip_existing
+    )
     if not food_data:
         print(f"❌ No data found for: {food_name}")
         return False
@@ -38,6 +43,7 @@ def main():
     parser = argparse.ArgumentParser(description="Populate food_info from Nutritionix")
     parser.add_argument("--food", help="Fetch a single food item by name")
     parser.add_argument("--file", default=DEFAULT_FILE, help="Path to foods.txt")
+    parser.add_argument("--skip-existing", action="store_true", help="Skip foods already in DB")
     parser.add_argument("--clear", action="store_true", help="Delete existing food_info entries")
     parser.add_argument("--max", type=int, default=MAX_API_CALLS, help="Max API calls to use")
     parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")
@@ -68,7 +74,7 @@ def main():
             print("🔁 Reached API limit.")
             break
 
-        if fetch_and_insert(conn, food, use_mock=args.mock):
+        if fetch_and_insert(conn, food, use_mock=args.mock, skip_existing=args.skip_existing):
             used += 1
 
         # Show partial DB state
