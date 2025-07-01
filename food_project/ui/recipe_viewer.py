@@ -1,3 +1,5 @@
+"""Streamlit components to browse recipes and compute totals."""
+
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -5,6 +7,7 @@ import pandas as pd
 from rapidfuzz import fuzz, process
 
 # --- Unit conversion map and aliases ---
+# Basic mapping of units to grams used for quick conversions
 unit_conversion_to_grams = {
     "g": 1,
     "kg": 1000,
@@ -32,10 +35,12 @@ unit_aliases = {
 }
 
 def normalize_unit(unit):
+    """Convert unit synonyms to a canonical form."""
     unit = unit.lower().strip()
     return unit_aliases.get(unit, unit)
 
 def convert_to_grams(amount, unit):
+    """Return the number of grams represented by the given amount and unit."""
     unit = normalize_unit(unit)
     if unit is None:
         st.warning(f"Unit '{unit}' not recognized — skipping conversion.")
@@ -50,6 +55,7 @@ def convert_to_grams(amount, unit):
         return None
 
 def normalize_ingredient(name):
+    """Simplify ingredient names for matching."""
     name = name.lower().strip()
     modifiers = ["sliced", "chopped", "fresh", "salted","unsalted", "diced", "minced", "grated", "large", "small"]
     words = name.split()
@@ -96,17 +102,21 @@ def load_food_data():
     return headers, [list(row) for row in rows]
 
 def match_ingredient(name, candidate_names, threshold=85):
+    """Return the closest matching food name above the threshold."""
     match, score, _ = process.extractOne(name, candidate_names, scorer=fuzz.ratio)
     if score >= threshold:
         return match
     return None
 
 def show_recipe_viewer():
+    """Render the interactive recipe viewer UI."""
+
     if st.button("Refresh Data"):
         st.cache_data.clear()
         st.rerun()
 
     try:
+        # Load recipe and ingredient data from the database
         recipe_df = load_recipe_df()
     except Exception as e:
         st.error(f"Could not load recipe data: {e}")
@@ -125,6 +135,7 @@ def show_recipe_viewer():
         totals = {}
 
         try:
+            # Load the nutrition data for matching
             headers, food_rows = load_food_data()
             normalized_food_map = {
                 normalize_ingredient(row[1]): row for row in food_rows if len(row) > 1
@@ -145,6 +156,7 @@ def show_recipe_viewer():
                 continue
 
             # Try exact match, then fuzzy match fallback
+            # Use a fuzzy match if we don't have an exact normalized name
             matched_name = food if food in normalized_food_map else match_ingredient(food, all_normalized_names)
 
             if matched_name:
@@ -185,6 +197,7 @@ def show_recipe_viewer():
 
         if ingredient_rows:
             df = pd.DataFrame(ingredient_rows)
+            # Create a summary row with the totals for numeric columns
             totals_row = {col: "" for col in df.columns}
             totals_row["ingredient"] = "Total"
             for key, value in totals.items():

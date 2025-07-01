@@ -1,3 +1,5 @@
+"""Link parsed ingredients to entries in the ``food_info`` table."""
+
 import sqlite3
 import argparse
 from food_project.processing.matcher import fetch_db_food_matches
@@ -5,6 +7,7 @@ from food_project.database.sqlite_connector import init_db
 from pathlib import Path
 
 def match_ingredients(db_path="food_info.db", init=False):
+    """Attempt to automatically match ingredients to known foods."""
     conn = sqlite3.connect(db_path)
     if init:
         print("⚙️ init_db() is recreating the food_info table")
@@ -26,6 +29,7 @@ def match_ingredients(db_path="food_info.db", init=False):
 
     # Load ingredients needing a match
     all_ingredients = cur.execute("SELECT id, normalized_name FROM ingredients").fetchall()
+    # ``unmatched_ingredients`` contains rows that haven't been normalized yet
     unmatched_ingredients = [row for row in all_ingredients if not row["normalized_name"]]
 
     print(f"📊 Total ingredients: {len(all_ingredients)}")
@@ -34,11 +38,13 @@ def match_ingredients(db_path="food_info.db", init=False):
     food_entries = cur.execute("SELECT id, normalized_name FROM food_info").fetchall()
 
     matched = 0
+    # Iterate over each ingredient and attempt to find the best match
     for ing in all_ingredients:
         ing_id, ing_name = ing["id"], ing["normalized_name"]
         if not ing_name:
             continue
 
+        # ``fetch_db_food_matches`` returns the best candidate from the database
         exact, next_best, similar = fetch_db_food_matches(ing_name)
 
         if exact:

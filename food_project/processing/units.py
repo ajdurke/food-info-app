@@ -1,3 +1,5 @@
+"""Utility constants and helpers for unit conversion."""
+
 import re
 
 COMMON_UNITS = [
@@ -15,10 +17,12 @@ UNIT_TO_GRAMS = {
 }
 
 def extract_unit_size(text):
+    """Extract the number of grams from strings like "(16 oz)"."""
     match = re.search(r"\((\d+(\.\d+)?)\s*(oz|oz.|ounce|ounces|g|gram|grams|ml|liter|liters)\)", text.lower())
     if match:
         quantity = float(match.group(1))
         unit = match.group(3)
         grams = quantity * UNIT_TO_GRAMS.get(unit, 1.0)
         return grams
+    # No size information found
     return None

@@ -1,3 +1,5 @@
+"""Parse raw ingredient text and store structured info."""
+
 import sqlite3
 import argparse
 from pathlib import Path
@@ -5,6 +7,7 @@ from food_project.processing.normalization import parse_ingredient
 from food_project.database.sqlite_connector import init_db
 
 def update_ingredients(force=False, db_path="food_info.db", init=False):
+    """Update ingredients table with parsed amounts and units."""
     conn = sqlite3.connect(db_path)
 
     if init:
@@ -39,6 +42,7 @@ def update_ingredients(force=False, db_path="food_info.db", init=False):
 
     query = "SELECT id, food_name FROM ingredients"
     if not force:
+        # Only reprocess rows that haven't been parsed yet unless --force is used
         query += " WHERE normalized_name IS NULL"
 
     rows = cur.execute(query).fetchall()
@@ -46,6 +50,7 @@ def update_ingredients(force=False, db_path="food_info.db", init=False):
 
     updated = 0
     for ing_id, raw_text in rows:
+        # ``parse_ingredient`` handles all the text cleaning and unit conversion
         amount, unit, normalized_name, est_grams = parse_ingredient(raw_text)
         cur.execute("""
             UPDATE ingredients
@@ -71,6 +76,7 @@ def update_ingredients(force=False, db_path="food_info.db", init=False):
     print(f"✅ Updated {updated} ingredient(s). {'(forced)' if force else '(new only)'}")
 
 def main():
+    # Command line wrapper for the ``update_ingredients`` function
     parser = argparse.ArgumentParser(description="Update parsed ingredient data")
     parser.add_argument("--init", action="store_true", help="Recreate food_info table before running (destructive)")
     parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")

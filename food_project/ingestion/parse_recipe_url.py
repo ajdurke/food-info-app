@@ -1,18 +1,22 @@
+"""Utility to scrape a recipe webpage and store its data."""
+
 import argparse
 from recipe_scrapers import scrape_me
 from food_project.database.sqlite_connector import save_recipe_and_ingredients
 
 def parse_recipe(url: str) -> dict:
+    """Download recipe details from the provided URL."""
     scraper = scrape_me(url)
     return {
         "title": scraper.title(),
         "ingredients": scraper.ingredients(),
         "instructions": scraper.instructions(),
         "raw_html": scraper.to_json(),  # optional backup
-        "url": url
+        "url": url,
     }
 
 def main():
+    """Parse arguments, scrape the recipe, and insert into the database."""
     parser = argparse.ArgumentParser(description="Scrape a recipe from a URL and save to database")
     parser.add_argument("--url", required=True, help="Recipe URL to scrape")
     parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")

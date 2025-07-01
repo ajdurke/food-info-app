@@ -1,5 +1,12 @@
 # scripts/create_fake_food_info.py
 
+"""Utility script to populate the database with made-up data."""
+
+# This file creates a list of "fake" foods with nutrient values. It
+# can be run to quickly insert sample rows into the ``food_info`` table
+# without hitting the real Nutritionix API.  It's primarily intended
+# for demonstrations or testing when network access isn't available.
+
 import sqlite3
 
 fake_foods = [
@@ -196,10 +203,12 @@ fake_foods = [
 ]
 
 def seed_fake_food_info(db_path="food_info.db"):
+    """Insert the ``fake_foods`` list into the database if not present."""
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     for food in fake_foods:
+        # Skip foods that have already been inserted
         cursor.execute("SELECT id FROM food_info WHERE normalized_name = ?", (food["normalized_name"],))
         if cursor.fetchone():
             continue  # Skip if already exists

@@ -1,3 +1,5 @@
+"""Populate the ``food_info`` table by querying Nutritionix."""
+
 import argparse
 import os
 from pathlib import Path
@@ -23,15 +25,13 @@ def read_food_list(path: str):
         return [line.strip() for line in f if line.strip()]
 
 def fetch_and_insert(conn, food_name: str, use_mock=False, skip_existing=False) -> bool:
-    """
-    Fetch and insert food data from Nutritionix. Return True if inserted.
-    """
+    """Fetch and insert food data from Nutritionix. Return True if inserted."""
     print(f"🔍 Inserting {food_name}...")
     food_data = get_nutrition_data(
         food_name,
         conn,
         use_mock=use_mock,
-        skip_if_exists=skip_existing
+        skip_if_exists=skip_existing,
     )
     if not food_data:
         print(f"❌ No data found for: {food_name}")
@@ -40,6 +40,7 @@ def fetch_and_insert(conn, food_name: str, use_mock=False, skip_existing=False) 
     return True
 
 def main():
+    # Command line interface for bulk populating the database
     parser = argparse.ArgumentParser(description="Populate food_info from Nutritionix")
     parser.add_argument("--food", help="Fetch a single food item by name")
     parser.add_argument("--file", default=DEFAULT_FILE, help="Path to foods.txt")

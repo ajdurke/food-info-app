@@ -1,8 +1,11 @@
+"""CLI tool for approving or rejecting nutrition data entries."""
+
 import argparse
 from pathlib import Path
 from food_project.database.sqlite_connector import get_connection, init_db
 
 def review_food_info(db_path: str, init: bool = False) -> None:
+    """Iterate over new food entries and mark them approved or not."""
     if init:
         print("⚙️ init_db() is recreating the food_info table")
     conn = get_connection(Path(db_path))
@@ -10,6 +13,7 @@ def review_food_info(db_path: str, init: bool = False) -> None:
         init_db(conn)
 
     cur = conn.cursor()
+    # Grab any entries that haven't been reviewed yet
     cur.execute("SELECT * FROM food_info WHERE approved IS NULL ORDER BY match_type")
     rows = cur.fetchall()
 
@@ -23,6 +27,7 @@ def review_food_info(db_path: str, init: bool = False) -> None:
             if key in {"id", "raw_name", "normalized_name", "match_type", "approved"}:
                 continue
             print(f"{key}: {row[key]}")
+        # Ask the reviewer whether this data looks correct
         ans = input("Approve this entry? [y/n/skip]: ").strip().lower()
         if ans == "y":
             cur.execute("UPDATE food_info SET approved=1 WHERE id=?", (row["id"],))
@@ -34,6 +39,7 @@ def review_food_info(db_path: str, init: bool = False) -> None:
     print("🎉 Done reviewing food_info entries.")
 
 def main():
+    # Entry point when running this file directly
     parser = argparse.ArgumentParser(description="Review pending Nutritionix entries in food_info.")
     parser.add_argument("--db", default="food_info.db", help="SQLite database path")
     parser.add_argument("--init", action="store_true", help="Recreate food_info table (destructive)")
