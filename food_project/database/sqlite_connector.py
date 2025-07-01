@@ -12,6 +12,7 @@ def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
 
 def init_db(conn: sqlite3.Connection) -> None:
     """Drop and recreate food_info table; ensure other tables exist."""
+    print("⚙️ init_db() is recreating the food_info table")
     cur = conn.cursor()
 
     # Recreate food_info table from scratch
