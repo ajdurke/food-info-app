@@ -1,15 +1,19 @@
-import sqlite3
+import argparse
+from food_project.database.sqlite_connector import get_connection, init_db
 
-DB_PATH = "food_info.db"
+def review_matches(db_path: str, init: bool = False) -> None:
+    if init:
+        print("⚙️ init_db() is recreating the food_info table")
+    from pathlib import Path
+    conn = get_connection(Path(db_path))
+    if init:
+        init_db(conn)
 
-def review_matches():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
     # Get ingredients with fuzzy matches
     fuzzy_matches = cur.execute("""
-        SELECT i.id, i.name AS raw_name, i.normalized_name, i.fuzz_score, f.normalized_name AS matched_food
+        SELECT i.id, i.food_name AS raw_name, i.normalized_name, i.fuzz_score, f.normalized_name AS matched_food
         FROM ingredients i
         JOIN food_info f ON i.matched_food_id = f.id
         WHERE i.match_type = 'fuzzy'
@@ -62,5 +66,12 @@ def review_matches():
     conn.close()
     print("\n🎉 Done reviewing fuzzy matches.")
 
+def main():
+    parser = argparse.ArgumentParser(description="Review fuzzy matches between ingredients and food_info.")
+    parser.add_argument("--db", default="food_info.db", help="SQLite database path")
+    parser.add_argument("--init", action="store_true", help="Recreate food_info table (destructive)")
+    args = parser.parse_args()
+    review_matches(db_path=args.db, init=args.init)
+
 if __name__ == "__main__":
-    review_matches()
+    main()
