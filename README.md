@@ -48,3 +48,10 @@ python scripts/import_csv_to_sqlite.py path/to/recipes.csv
 This command creates any missing tables and inserts one `recipes` row for each
 `recipe_id` found in the CSV along with its ingredient rows.
 
+### Running the data pipeline
+<!-- 
+python -m food_project.ingestion.parse_recipe_url --url "https://www.allrecipes.com/recipe/242110/simple-mexican-quinoa/"
+python -m food_project.processing.ingredient_updater
+python -m food_project.ingestion.match_ingredients_to_food_info
+python -m food_project.ingestion.review_matches 
+-->

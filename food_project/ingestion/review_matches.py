@@ -1,22 +1,31 @@
 import argparse
 from food_project.database.sqlite_connector import get_connection, init_db
+from pathlib import Path
 
 def review_matches(db_path: str, init: bool = False) -> None:
-    if init:
-        print("⚙️ init_db() is recreating the food_info table")
-    from pathlib import Path
     conn = get_connection(Path(db_path))
     if init:
+        print("⚙️ init_db() is recreating the food_info table")
         init_db(conn)
 
     cur = conn.cursor()
+
+    # Add new columns if missing
+    for col_def in [
+        "ALTER TABLE ingredients ADD COLUMN match_reviewed BOOLEAN",
+        "ALTER TABLE ingredients ADD COLUMN review_outcome TEXT"
+    ]:
+        try:
+            cur.execute(col_def)
+        except Exception:
+            pass  # Ignore if column already exists
 
     # Get ingredients with fuzzy matches
     fuzzy_matches = cur.execute("""
         SELECT i.id, i.food_name AS raw_name, i.normalized_name, i.fuzz_score, f.normalized_name AS matched_food
         FROM ingredients i
         JOIN food_info f ON i.matched_food_id = f.id
-        WHERE i.match_type = 'fuzzy'
+        WHERE i.match_type = 'fuzzy' AND (i.match_reviewed IS NULL OR i.match_reviewed = 0)
     """).fetchall()
 
     if not fuzzy_matches:
@@ -35,13 +44,21 @@ def review_matches(db_path: str, init: bool = False) -> None:
         choice = input("Your choice: ").strip().lower()
 
         if choice == "y":
+            cur.execute("""
+                UPDATE ingredients
+                SET match_reviewed = 1, review_outcome = 'approved'
+                WHERE id = ?
+            """, (row["id"],))
             print("✅ Approved.")
-            continue
 
         elif choice == "n":
             cur.execute("""
                 UPDATE ingredients
-                SET matched_food_id = NULL, match_type = NULL, fuzz_score = NULL
+                SET matched_food_id = NULL,
+                    match_type = NULL,
+                    fuzz_score = NULL,
+                    match_reviewed = 1,
+                    review_outcome = 'rejected'
                 WHERE id = ?
             """, (row["id"],))
             print("❌ Match removed.")
@@ -52,7 +69,8 @@ def review_matches(db_path: str, init: bool = False) -> None:
             if match_row:
                 cur.execute("""
                     UPDATE ingredients
-                    SET matched_food_id = ?, match_type = 'manual', fuzz_score = 100
+                    SET matched_food_id = ?, match_type = 'manual', fuzz_score = 100,
+                        match_reviewed = 1, review_outcome = 'manual'
                     WHERE id = ?
                 """, (match_row["id"], row["id"]))
                 print("✏️ Manually overridden.")
@@ -60,6 +78,11 @@ def review_matches(db_path: str, init: bool = False) -> None:
                 print("⚠️ No such normalized_name found in food_info.")
 
         else:
+            cur.execute("""
+                UPDATE ingredients
+                SET match_reviewed = 1, review_outcome = 'skipped'
+                WHERE id = ?
+            """, (row["id"],))
             print("⏭️ Skipped.")
 
     conn.commit()
