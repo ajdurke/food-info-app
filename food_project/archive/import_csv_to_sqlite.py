@@ -7,7 +7,7 @@ from pathlib import Path
 DEFAULT_DB = Path("food_info.db")
 
 
-def init_db(conn: sqlite3.Connection) -> None:
+def init_db_superseded(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
     cur.execute(
         """
@@ -77,7 +77,7 @@ def main() -> None:
 
     db_path = Path(args.db)
     conn = sqlite3.connect(db_path)
-    init_db(conn)
+    init_db_superseded(conn)
     import_recipes(Path(args.csv_file), conn)
     conn.close()
 
