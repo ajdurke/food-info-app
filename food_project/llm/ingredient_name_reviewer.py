@@ -1,10 +1,14 @@
 import requests
 import os
+import streamlit as st
 
-# You only need read-level access
+# Try Streamlit secrets first, then fallback to env variable
+HF_API_KEY = st.secrets.get("huggingface", {}).get("api_key") or os.getenv("HF_API_KEY")
+
+if not HF_API_KEY:
+    raise Exception("❌ Hugging Face API key not found. Add to secrets.toml or set HF_API_KEY env var.")
+
 API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
-HF_API_KEY = os.getenv("HF_API_KEY")  # You can also hardcode your token here
-
 HEADERS = {"Authorization": f"Bearer {HF_API_KEY}"}
 
 def suggest_normalized_name(raw_ingredient: str, current_normalized: str, food_info_list: list[str]) -> str:
