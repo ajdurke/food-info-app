@@ -6,14 +6,13 @@ from pathlib import Path
 from fractions import Fraction
 from food_project.processing.units import COMMON_UNITS, extract_unit_size
 
-p = inflect.engine()  # Library used to convert plural words to singular
+p = inflect.engine()
 
 FRACTIONS = {
     "½": "1/2", "¼": "1/4", "¾": "3/4", "⅓": "1/3", "⅔": "2/3", "⅛": "1/8"
 }
 
 def load_descriptors():
-    """Load descriptor words from config/descriptors.txt, ignoring comments and section headers."""
     path = Path(__file__).parent.parent / "config" / "descriptors.txt"
     descriptors = set()
     with open(path, encoding="utf-8") as f:
@@ -26,14 +25,7 @@ def load_descriptors():
 
 DESCRIPTORS = load_descriptors()
 
-# Words that should not be singularized (e.g. parsley → parsley)
-SKIP_SINGULARIZATION = {
-    "parsley", "spinach", "chard", "kale", "lettuce", "rice", "quinoa",
-    "arugula", "cilantro", "basil", "chives", "thyme", "rosemary", "mint"
-}
-
 def load_descriptor_phrases():
-    """Load full multi-word descriptor phrases."""
     path = Path(__file__).parent.parent / "config" / "descriptor_phrases.txt"
     phrases = []
     if path.exists():
@@ -47,41 +39,39 @@ def load_descriptor_phrases():
 DESCRIPTOR_PHRASES = load_descriptor_phrases()
 
 def normalize_food_name(text):
-    """Simplify ingredient text to a consistent, searchable form."""
     if not text:
         return ""
 
-    # Normalize unicode fractions
     for frac, ascii_frac in FRACTIONS.items():
         text = text.replace(frac, ascii_frac)
 
-    # Remove parentheticals and trailing commas
     text = re.sub(r"\(.*?\)", "", text)
-    text = re.sub(r",.*", "", text)
 
-    # Remove descriptor phrases first (before splitting into words)
-    lowered = text.lower()
+    segments = text.split(",")
+    if len(segments[0].split()) >= 2:
+        text = segments[0]
+
     for phrase in DESCRIPTOR_PHRASES:
-        lowered = lowered.replace(phrase, "")
+        text = text.replace(phrase, "")
 
-    # Remove numbers and fractions
-    lowered = re.sub(r"\b\d+\s+(and\s+)?\d+/\d+\b", "", lowered)
-    lowered = re.sub(r"\b\d+/\d+\b", "", lowered)
-    lowered = re.sub(r"\b\d+(\.\d+)?\b", "", lowered)
+    text = re.sub(r"\b\d+\s+(and\s+)?\d+/\d+\b", "", text)
+    text = re.sub(r"\b\d+/\d+\b", "", text)
+    text = re.sub(r"\b\d+(\.\d+)?\b", "", text)
 
-    # Tokenize and clean punctuation
-    words = lowered.split()
+    words = text.lower().split()
     words = [w.strip(",.") for w in words]
 
-    # Remove trailing descriptors
     while words and words[-1] in DESCRIPTORS:
         words.pop()
 
-    # Remove remaining individual descriptors
-    words = [w for w in words if w not in DESCRIPTORS and p.singular_noun(w) not in DESCRIPTORS]
+    filtered = []
+    for w in words:
+        if w in DESCRIPTORS or (p.singular_noun(w) in DESCRIPTORS):
+            if len(words) > 1:
+                continue
+        filtered.append(w)
+    words = filtered
 
-
-    # Singularize (skip some)
     skip_singularization = {"boneless", "skinless", "seedless", "fatless", "skin-on", "bone-in"}
     singular_words = [
         w if w in skip_singularization else p.singular_noun(w) or w
@@ -90,9 +80,7 @@ def normalize_food_name(text):
 
     return " ".join(singular_words).strip()
 
-
 def is_countable_item(normalized_name: str) -> bool:
-    """Heuristic check to see if an ingredient is typically counted."""
     countable_keywords = {
         "apple", "banana", "egg", "onion", "lemon", "lime", "orange", "scallion",
         "shallot", "clove", "pepper", "potato", "carrot", "shrimp", "tomato", "zucchini",
@@ -104,70 +92,64 @@ def is_countable_item(normalized_name: str) -> bool:
         cleaned.endswith("s") and cleaned[:-1] in countable_keywords
     )
 
-def parse_amount_v2(text):
-    """Parse mixed and fractional numeric quantities like '1 1/2' or '2 and 1/4'."""
-    try:
-        text = text.lower().replace(" and ", " ")
-        parts = text.split()
-        total = 0.0
-        for part in parts:
-            try:
-                total += float(Fraction(part))
-            except ValueError:
-                return None
-        return total if total > 0 else None
-    except Exception:
-        return None
-
 def parse_ingredient(raw: str):
     original = raw.strip()
 
-    # === Step 1: Clean and normalize input ===
-    cleaned = original.lower().replace(" and ", " ")  # Handle "1 and 3/4"
-    cleaned = re.sub(r"\(.*?\)", "", cleaned)  # remove parentheticals
-    cleaned = re.sub(r"[^a-zA-Z0-9\s/.\-¼½¾⅓⅔⅛⅜⅝⅞]", "", cleaned)  # keep basic fractions
+    # Remove fractions and normalize
+    for frac, ascii_frac in FRACTIONS.items():
+        raw = raw.replace(frac, ascii_frac)
+
+    # Pre-clean multi-quantity formats (e.g., "1/4 cup plus 2 Tbsp")
+    raw = re.sub(r"\bor more\b", "", raw, flags=re.IGNORECASE)
+    raw = re.sub(r"\bplus\b", "+", raw, flags=re.IGNORECASE)
+
+    cleaned = raw.lower().replace(" and ", " ")
+    cleaned = re.sub(r"\(.*?\)", "", cleaned)
+    cleaned = re.sub(r"[^a-zA-Z0-9\s/.\-+]", "", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
-    # === Step 2: Extract amount ===
+    # Parse compound amounts like "1/4 + 2 tbsp"
     amount = None
-    amount_match = re.match(
-        r'^(\d+\s+and\s+\d+/\d+|\d+\s+\d+/\d+|\d+/\d+|\d+\.\d+|\d+[¼½¾⅓⅔⅛⅜⅝⅞]?|\d+)',
-        cleaned
-    )
-    if amount_match:
-        amount_str = amount_match.group(1)
-        try:
-            if " " in amount_str:  # e.g., "1 1/2"
-                parts = amount_str.split()
-                amount = float(parts[0]) + eval(parts[1])
-            elif "/" in amount_str:
-                amount = eval(amount_str)
-            elif re.search(r"[¼½¾⅓⅔⅛⅜⅝⅞]", amount_str):
-                unicodes = {
-                    "¼": 0.25, "½": 0.5, "¾": 0.75,
-                    "⅓": 1/3, "⅔": 2/3,
-                    "⅛": 1/8, "⅜": 3/8, "⅝": 5/8, "⅞": 7/8,
-                }
-                amount = unicodes.get(amount_str.strip(), None)
-            else:
-                amount = float(amount_str)
-            cleaned = cleaned[len(amount_str):].strip()
-        except Exception:
-            pass
-
-    # === Step 3: Extract unit ===
-    words = cleaned.split()
-    words = [w.strip(",.") for w in words]  # strip trailing punctuation before unit check
+    total_amount = 0.0
+    compound_parts = re.split(r"\+", cleaned)
+    matched_amounts = 0
     unit = None
-    if words:
-        first = words[0].lower()
-        if first in COMMON_UNITS:
-            unit = words.pop(0)
-        elif first.endswith("s") and first.rstrip("s") in COMMON_UNITS:
-            unit = words.pop(0)
+    final_words = []
 
-    # === Step 4: Normalize the remaining words ===
-    normalized_name = normalize_food_name(" ".join(words))
+    for part in compound_parts:
+        part = part.strip()
+        match = re.match(
+            r'^(\d+\s+\d+/\d+|\d+/\d+|\d+\.\d+|\d+)',
+            part
+        )
+        if match:
+            matched_amounts += 1
+            num_str = match.group(1)
+            try:
+                val = float(sum(Fraction(s) for s in num_str.split()))
+                total_amount += val
+                part = part[len(num_str):].strip()
+            except Exception:
+                continue
+
+            words = part.split()
+            if not unit and words:
+                u = words[0]
+                if u in COMMON_UNITS or u.rstrip("s") in COMMON_UNITS:
+                    unit = u.rstrip("s")
+                    words = words[1:]
+
+            final_words.extend(words)
+
+        else:
+            final_words.extend(part.split())
+
+    amount = total_amount if matched_amounts else None
+
+    # Remove descriptors from name
+    name_words = [w for w in final_words if w not in DESCRIPTORS and p.singular_noun(w) not in DESCRIPTORS]
+
+    normalized_name = normalize_food_name(" ".join(name_words))
     est_grams = extract_unit_size(amount, unit, normalized_name)
 
     return amount, unit, normalized_name, est_grams

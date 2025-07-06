@@ -101,3 +101,7 @@ boneless
 skinless
 all-purpose
 cold
+kernels
+crumbled
+picked
+halves
