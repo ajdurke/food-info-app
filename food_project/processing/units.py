@@ -7,7 +7,9 @@ COMMON_UNITS = [
     "tsp", "teaspoon", "teaspoons", "tsp.", "oz", "oz.", "ounce", "ounces",
     "lb", "lb.", "pound", "pounds", "gram", "grams", "g", "ml", "liter", "liters",
     "can", "cans", "package", "packages", "pkg", "pkg.", "clove", "cloves",
-    "slice", "slices", "pinch", "dash"
+    "slice", "slices", "pinch", "sprig", "sprigs", "bunch", "package", "bag",
+    "stick", "recipe", "sheet", "pint", "jar", "stalk", "ear", "ears", "cube",
+    "strip", "chunk", "dash", "piece", "drop",
 ]
 
 UNIT_TO_GRAMS = {
@@ -16,13 +18,9 @@ UNIT_TO_GRAMS = {
     "gram": 1.0, "grams": 1.0, "g": 1.0
 }
 
-def extract_unit_size(text):
-    """Extract the number of grams from strings like "(16 oz)"."""
-    match = re.search(r"\((\d+(\.\d+)?)\s*(oz|oz.|ounce|ounces|g|gram|grams|ml|liter|liters)\)", text.lower())
-    if match:
-        quantity = float(match.group(1))
-        unit = match.group(3)
-        grams = quantity * UNIT_TO_GRAMS.get(unit, 1.0)
-        return grams
-    # No size information found
-    return None
+import re
+
+def extract_unit_size(amount, unit, normalized_name):
+    """Placeholder function to estimate grams based on amount, unit, and food name."""
+    return None  # Real logic will go here later
+
