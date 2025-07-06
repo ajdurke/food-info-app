@@ -8,7 +8,8 @@ HF_API_KEY = st.secrets.get("huggingface", {}).get("api_key") or os.getenv("HF_A
 if not HF_API_KEY:
     raise Exception("❌ Hugging Face API key not found. Add to secrets.toml or set HF_API_KEY env var.")
 
-API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-base"
+
 HEADERS = {"Authorization": f"Bearer {HF_API_KEY}"}
 
 def suggest_normalized_name(raw_ingredient: str, current_normalized: str, food_info_list: list[str]) -> str:
