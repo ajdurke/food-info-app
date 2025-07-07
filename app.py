@@ -134,38 +134,40 @@ with tab1:
             match_ingredients()
 
         # Pull parsed ingredients
-        # query = """
-        #     SELECT i.food_name,
-        #         i.amount,
-        #         i.quantity,
-        #         i.unit,
-        #         i.normalized_name,
-        #         i.matched_food_id,
-        #         f.calories,
-        #         f.protein,
-        #         f.carbs,
-        #         f.fat
-        #     FROM ingredients i
-        #     LEFT JOIN food_info f ON i.matched_food_id = f.id
-        #     WHERE i.recipe_id = ?
-        # """
-        # ingredients = pd.read_sql_query(query, conn, params=(selected_id,))
-        ingredients = pd.read_sql_query("""
-            SELECT
-                i.id AS ingredient_id,
-                i.recipe_id,
-                i.food_name,
+        query_direct = f"""
+            SELECT i.food_name,
+                i.amount,
+                i.quantity,
+                i.unit,
+                i.normalized_name,
                 i.matched_food_id,
-                f.id AS food_info_id,
-                f.normalized_name,
                 f.calories,
                 f.protein,
                 f.carbs,
                 f.fat
             FROM ingredients i
             LEFT JOIN food_info f ON i.matched_food_id = f.id
-            WHERE i.recipe_id = 3;
-        """, conn)
+            WHERE i.recipe_id = {selected_id}
+        """
+        ingredients = pd.read_sql_query(query_direct, conn)
+
+
+        # ingredients = pd.read_sql_query("""
+        #     SELECT
+        #         i.id AS ingredient_id,
+        #         i.recipe_id,
+        #         i.food_name,
+        #         i.matched_food_id,
+        #         f.id AS food_info_id,
+        #         f.normalized_name,
+        #         f.calories,
+        #         f.protein,
+        #         f.carbs,
+        #         f.fat
+        #     FROM ingredients i
+        #     LEFT JOIN food_info f ON i.matched_food_id = f.id
+        #     WHERE i.recipe_id = 3;
+        # """, conn)
 
         # Show raw values before formatting
         st.markdown("### 🧪 Raw parsed ingredient join result")
