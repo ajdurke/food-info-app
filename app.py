@@ -68,6 +68,18 @@ with tab1:
         df_all_ingredients = pd.read_sql_query("SELECT * FROM ingredients", conn)
         st.dataframe(df_all_ingredients)
 
+        # Add this to your debug section:
+        st.write("🔬 Matched food_info nutrition values:")
+        matched_ids = tuple(df_by_recipe["matched_food_id"].dropna().astype(int))
+        if matched_ids:
+            st.dataframe(pd.read_sql(f"""
+                SELECT id, normalized_name, calories, protein, fat, carbs
+                FROM food_info
+                WHERE id IN {matched_ids}
+            """, conn))
+        else:
+            st.write("No matched_food_id values found.")
+
         # Then filter by recipe_id only
         st.markdown("### 🐞 DEBUG: Ingredients with selected recipe_id")
         df_by_recipe = df_all_ingredients[df_all_ingredients["recipe_id"] == selected_id]
