@@ -1,201 +1,143 @@
-"""Parse raw ingredient text and store structured info, with LLM fallback and nutrition enrichment."""
-import streamlit as st
-st.write("✅ ingredient_updater.py loaded")
+import os
 import sqlite3
-import argparse
-from pathlib import Path
-from food_project.processing.normalization import parse_ingredient
-from food_project.processing.validator import score_food_match, score_unit
-from food_project.processing.units import COMMON_UNITS
-from food_project.llm.full_parser import parse_with_llm
-from food_project.llm.estimate_nutrition import estimate_nutrition_from_llm
+import streamlit as st
+st.write("📦 app.py loaded")
+import pandas as pd
+from food_project.database.sqlite_connector import get_connection
 from food_project.database.nutritionix_service import get_nutrition_data
-from food_project.database.sqlite_connector import init_db
+from food_project.database.sqlite_connector import save_recipe_and_ingredients
+from food_project.ingestion.parse_recipe_url import parse_recipe
+from food_project.ui.review_log_viewer import show_review_log
+from food_project.ui.review_matches_app import get_fuzzy_matches
+from food_project.processing.ingredient_updater import update_ingredients
+from food_project.ingestion.match_ingredients_to_food_info import match_ingredients
 
-def update_ingredients(force=False, db_path="food_info.db", init=False, mock=False):
-    """Update ingredients table with parsed amounts, units, match scores, LLM fallback, and nutrition."""
-    abs_path = Path(db_path).resolve()
-    st.write(f"📂 Opening DB at: {abs_path}")
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-    st.write("🛠 Connected to:", os.path.abspath(db_path))
-    st.write("📍 DB path in updater:", conn.execute("PRAGMA database_list").fetchone()[2])
+# Title banner for environment
+branch = st.secrets.get("general", {}).get("STREAMLIT_BRANCH", "main")
+st.title("📊 Food Info Tracker" + (" — Staging" if branch == "staging" else ""))
 
-    if init:
-        print("⚙️ init_db() is recreating the food_info table")
-        init_db(conn)
+# Set up tabs
+tab1, tab2 = st.tabs(["🍽 Recipes & Nutrition", "🧪 Review Matches"])
 
-    # Ensure review log table exists
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS ingredient_review_log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ingredient_id INTEGER,
-        raw_text TEXT,
-        normalized_name TEXT,
-        amount REAL,
-        unit TEXT,
-        food_score REAL,
-        unit_score REAL,
-        used_llm INTEGER,
-        used_llm_estimate INTEGER,
-        used_nutritionix INTEGER,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        approved TEXT DEFAULT 'pending'
-    )
-    """)
+with tab1:
+    conn = get_connection()
+    st.write("📍 DB path in app:", conn.execute("PRAGMA database_list").fetchone()[2])
+    st.markdown(f"📍 DB path in app: `{os.path.abspath('food_info.db')}`")
 
-    try:
-        cur.execute("SELECT COUNT(*) FROM ingredients")
-    except sqlite3.OperationalError:
-        print("❌ Error: ingredients table missing. Did you initialize the DB?")
-        conn.close()
-        return
 
-    total = cur.fetchone()[0]
-    st.write(f"📊 Total ingredients in DB: {total}")
+    @st.cache_data(ttl=600)
+    def load_recipes():
+        return pd.read_sql_query("SELECT id, recipe_title FROM recipes ORDER BY id DESC", conn)
 
-    for column_def in [
-        "ALTER TABLE ingredients ADD COLUMN amount REAL",
-        "ALTER TABLE ingredients ADD COLUMN unit TEXT",
-        "ALTER TABLE ingredients ADD COLUMN normalized_name TEXT",
-        "ALTER TABLE ingredients ADD COLUMN estimated_grams REAL",
-        "ALTER TABLE ingredients ADD COLUMN fuzz_score REAL",
-        "ALTER TABLE ingredients ADD COLUMN food_score REAL",
-        "ALTER TABLE ingredients ADD COLUMN unit_score REAL",
-        "ALTER TABLE ingredients ADD COLUMN matched_food_id INTEGER"
-    ]:
-        try:
-            cur.execute(column_def)
-        except sqlite3.OperationalError:
-            pass
+    recipes_df = load_recipes()
+    recipe_options = recipes_df["recipe_title"].tolist()
+    selected = st.selectbox("Select an existing recipe:", ["-- Select --"] + recipe_options)
 
-    cur.execute("SELECT id, normalized_name FROM food_info")
-    food_info_rows = cur.fetchall()
-    known_foods = [row["normalized_name"] for row in food_info_rows]
-    food_name_to_id = {row["normalized_name"]: row["id"] for row in food_info_rows}
+    # Add new recipe
+    st.markdown("### 📥 Add New Recipe")
+    url_input = st.text_input("Paste recipe URL:")
+    if st.button("Add Recipe from URL"):
+        if url_input:
+            try:
+                recipe_data = parse_recipe(url_input)
+                recipe_id = save_recipe_and_ingredients(recipe_data)
+                st.success(f"✅ Added '{recipe_data['title']}' to the database.")
+                st.write("🚀 Calling update_ingredients")
+                update_ingredients(force=True)
+                match_ingredients()
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed to parse or insert recipe: {e}")
+        else:
+            st.warning("Please enter a valid recipe URL.")
 
-    if not force:
-        query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NULL"
+    if selected and selected != "-- Select --":
+        selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
+        st.write("🔍 Debug: selected_id =", selected_id)
+
+        # Check if this recipe has unprocessed ingredients
+        raw_ingredient_count = pd.read_sql_query("""
+            SELECT COUNT(*) as count FROM ingredients
+            WHERE recipe_id = ? AND (normalized_name IS NULL OR amount IS NULL)
+        """, conn, params=(selected_id,)).iloc[0]["count"]
+
+        if raw_ingredient_count > 0:
+            st.warning("🔄 Some ingredients are unparsed — running updater...")
+            update_ingredients(force=True)
+            match_ingredients()
+
+        # Pull parsed ingredients
+        query = """
+            SELECT i.food_name,
+                COALESCE(i.amount, i.quantity) AS amount,
+                i.unit,
+                i.normalized_name,
+                f.calories,
+                f.protein,
+                f.carbs,
+                f.fat
+            FROM ingredients i
+            LEFT JOIN food_info f ON i.matched_food_id = f.id
+            WHERE i.recipe_id = ?
+        """
+        ingredients = pd.read_sql_query(query, conn, params=(selected_id,))
+        ingredients = ingredients.fillna("—")
+
+
+        st.write("📌 Selected Recipe ID:", selected_id)
+
+        st.write("📌 Total ingredients with this recipe_id:")
+        total_ingredients = pd.read_sql("SELECT COUNT(*) AS count FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
+        st.write(total_ingredients)
+
+        st.write("📄 Raw ingredients for this recipe_id:")
+        raw = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
+        st.dataframe(raw)
+
+        st.write("⚠️ Ingredients missing match (matched_food_id is NULL):")
+        unmatched = pd.read_sql("""
+        SELECT * FROM ingredients
+        WHERE recipe_id = ? AND matched_food_id IS NULL
+        """, conn, params=(selected_id,))
+        st.dataframe(unmatched)
+
+        st.write("🧠 Sample food_info entries:")
+        food_info_check = pd.read_sql("SELECT id, normalized_name FROM food_info ORDER BY id DESC LIMIT 10", conn)
+        st.dataframe(food_info_check)
+
+        st.markdown(f"### 🍴 Ingredients for '{selected}'")
+        st.dataframe(ingredients)
+
+        st.markdown("### 📊 Nutrition Summary")
+        if ingredients.empty:
+            st.info("No ingredients found.")
+        else:
+            missing = ingredients[ingredients["calories"] == "—"]
+            if not missing.empty:
+                st.warning(f"⚠️ Missing nutrition data for: {', '.join(missing['food_name'])}")
+            totals = ingredients[["calories", "protein", "carbs", "fat"]].replace("—", 0).astype(float).sum()
+            st.table(totals.rename("Total"))
+
+        # Debug preview
+        st.write("🧾 Sample of parsed ingredients:")
+        st.dataframe(pd.read_sql_query(
+            "SELECT id, food_name, quantity, amount, unit, normalized_name FROM ingredients WHERE recipe_id = ?",
+            conn, params=(selected_id,)
+        ))
+
+with tab2:
+    st.markdown("## 🧪 Review Fuzzy Matches")
+    matches = get_fuzzy_matches()
+    if not matches:
+        st.success("✅ No fuzzy matches to review.")
     else:
-        query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NOT NULL AND matched_food_id IS NULL"
+        for row in matches[:20]:
+            with st.expander(f"{row['raw_name']} → {row['matched_food']}"):
+                st.markdown(f"- **Normalized:** `{row['normalized_name']}`")
+                st.markdown(f"- **Fuzz Score:** `{row['fuzz_score']}`")
+                st.markdown(f"- **Match Type:** `{row['match_type']}`")
+        st.info("More detailed review available via CLI or future admin tab.")
 
-    rows = cur.execute(query).fetchall()
-    print(f"🔍 Ingredients to update: {len(rows)}")
-
-    updated = 0
-    for ing_id, raw_text in rows:
-        used_llm = 0
-        used_llm_estimate = 0
-        used_nutritionix = 0
-
-        amount, unit, normalized_name, est_grams = parse_ingredient(raw_text)
-        food_score = score_food_match(normalized_name, known_foods)
-        unit_score = score_unit(unit, set(COMMON_UNITS))
-
-        if (food_score < 80 or unit_score < 80) and raw_text:
-            used_llm = 1
-            print(f"🤖 Using LLM for ingredient {ing_id}: '{raw_text}' (scores: food={food_score}, unit={unit_score})")
-            llm_result = parse_with_llm(raw_text, mock=mock)
-            if llm_result.get("food"):
-                amount = llm_result.get("amount")
-                unit = llm_result.get("unit")
-                normalized_name = llm_result.get("normalized_name")
-                est_grams = None
-                food_score = llm_result.get("food_score", 60.0)
-                unit_score = llm_result.get("unit_score", 60.0)
-
-        matched_food_id = food_name_to_id.get(normalized_name)
-        result = None
-        if not matched_food_id and normalized_name:
-            print(f"🥣 Fetching nutrition info for: {normalized_name}")
-            result = get_nutrition_data(normalized_name, conn, use_mock=mock, skip_if_exists=True)
-            used_nutritionix = 1 if result else 0
-
-            if not result:
-                used_llm_estimate = 1
-                print(f"⚠️ API failed. Estimating nutrition via LLM for: {normalized_name}")
-                est = estimate_nutrition_from_llm(normalized_name, mock=mock)
-                if est:
-                    cur.execute("""
-                        INSERT INTO food_info (
-                            raw_name, normalized_name, serving_qty, serving_unit,
-                            serving_weight_grams, calories, fat, saturated_fat, cholesterol,
-                            sodium, carbs, fiber, sugars, protein, potassium,
-                            match_type, approved
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        normalized_name, normalized_name,
-                        100, "g", 100,
-                        est.get("calories"), est.get("fat"), est.get("saturated_fat"), est.get("cholesterol"),
-                        est.get("sodium"), est.get("carbs"), est.get("fiber"), est.get("sugars"),
-                        est.get("protein"), est.get("potassium"),
-                        "llm_estimate", 0
-                    ))
-                    conn.commit()
-
-            cur.execute("SELECT id FROM food_info WHERE normalized_name = ?", (normalized_name,))
-            row = cur.fetchone()
-            matched_food_id = row["id"] if row else None
-
-        cur.execute("""
-            UPDATE ingredients
-            SET amount = ?, unit = ?, normalized_name = ?, estimated_grams = ?,
-                food_score = ?, unit_score = ?, matched_food_id = ?
-            WHERE id = ?
-        """, (
-            amount, unit, normalized_name, est_grams,
-            food_score, unit_score, matched_food_id,
-            ing_id
-        ))
-        updated += 1
-
-        # Log this update
-        cur.execute("""
-            INSERT INTO ingredient_review_log (
-                ingredient_id, raw_text, normalized_name, amount, unit,
-                food_score, unit_score,
-                used_llm, used_llm_estimate, used_nutritionix
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            ing_id, raw_text, normalized_name, amount, unit,
-            food_score, unit_score,
-            used_llm, used_llm_estimate, used_nutritionix
-        ))
-
-    conn.commit()
-
-    if updated:
-        cur.execute("""
-            SELECT food_name, normalized_name, amount, unit, food_score, unit_score
-            FROM ingredients
-            ORDER BY id DESC
-            LIMIT 3
-        """)
-        print("🧾 Example updates:")
-        for row in cur.fetchall():
-            print(" -", tuple(row))
-
-    conn.close()
-    print(f"✅ Updated {updated} ingredient(s). {'(forced)' if force else '(new only)'}")
-
-def main():
-    parser = argparse.ArgumentParser(description="Update parsed ingredient data")
-    parser.add_argument("--init", action="store_true", help="Recreate food_info table before running (destructive)")
-    parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")
-    parser.add_argument("--force", action="store_true", help="Force reprocessing of all ingredients")
-    parser.add_argument("--mock", action="store_true", help="Use mock LLM and API responses")
-    args = parser.parse_args()
-
-    update_ingredients(
-        force=args.force,
-        db_path=args.db,
-        init=args.init,
-        mock=args.mock
-    )
-
-# Only run main() if executed as script
-if __name__ == "__main__":
-    main()
-
+    st.markdown("---")
+    st.markdown("## 🧾 Ingredient Parsing Logs")
+    show_review_log()
