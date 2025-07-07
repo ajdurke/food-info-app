@@ -44,7 +44,8 @@ with tab3:
 def load_food_list():
     conn = sqlite3.connect("food_info.db")
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT food_name FROM ingredients ORDER BY food_name")
+    cursor.execute("SELECT DISTINCT food_name FROM ingredients WHERE food_name IS NOT NULL ORDER BY food_name")
+
     rows = cursor.fetchall()
     conn.close()
     return [row[0] for row in rows]
