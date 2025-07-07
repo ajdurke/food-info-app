@@ -6,6 +6,7 @@
 # ingredient text, matching ingredients to nutrition data,
 # and presenting recipe information in the browser.
 
+import os
 import streamlit as st
 import sqlite3
 from food_project.ui import recipe_viewer
@@ -13,7 +14,8 @@ from food_project.processing.ingredient_updater import update_ingredients
 from food_project.ingestion.match_ingredients_to_food_info import match_ingredients
 from food_project.ui.review_log_viewer import show_review_log
 
-st.write("🔐 TOGETHER_API_KEY found:", "TOGETHER_API_KEY" in st.secrets)
+TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY") or st.secrets["together"]["api_key"]
+
 try:
     app_id = st.secrets["nutritionix"]["app_id"]
     api_key = st.secrets["nutritionix"]["api_key"]
