@@ -97,9 +97,11 @@ with tab1:
         # Pull parsed ingredients
         query = """
             SELECT i.food_name,
-                COALESCE(i.amount, i.quantity) AS amount,
+                i.amount,
+                i.quantity,
                 i.unit,
                 i.normalized_name,
+                i.matched_food_id,
                 f.calories,
                 f.protein,
                 f.carbs,
@@ -109,7 +111,10 @@ with tab1:
             WHERE i.recipe_id = ?
         """
         ingredients = pd.read_sql_query(query, conn, params=(selected_id,))
-        ingredients = ingredients.fillna("—")
+
+        # Show raw values before formatting
+        st.markdown("### 🧪 Raw parsed ingredient join result")
+        st.dataframe(ingredients)
 
 
         st.write("📌 Selected Recipe ID:", selected_id)
