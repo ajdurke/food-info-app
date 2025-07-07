@@ -57,7 +57,7 @@ with tab1:
         st.write("🔍 All ingredients table:", df_debug)
 
         query = """
-            SELECT i.food_name, i.amount, i.unit, i.normalized_name, f.calories, f.protein, f.carbs, f.fat
+            SELECT i.food_name, i.quantity AS amount, i.unit, i.normalized_name, f.calories, f.protein, f.carbs, f.fat
             FROM ingredients i
             LEFT JOIN food_info f ON i.matched_food_id = f.id
             WHERE i.recipe_id = ?
