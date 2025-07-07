@@ -1,34 +1,34 @@
 {
   "5 teaspoons vegetable oil": {
-    "food": "mocked chicken",
-    "amount": 3,
-    "unit": "count",
-    "normalized_name": "chicken",
-    "food_score": 90,
-    "unit_score": 95
+    "food": "vegetable oil",
+    "amount": 5,
+    "unit": "teaspoon",
+    "normalized_name": "vegetable oil",
+    "food_score": 0.9,
+    "unit_score": 1.0
   },
   "7 dried red chile peppers, finely chopped": {
-    "food": "mocked chicken",
-    "amount": 3,
+    "food": "red chile pepper",
+    "amount": 7,
     "unit": "count",
-    "normalized_name": "chicken",
-    "food_score": 90,
-    "unit_score": 95
+    "normalized_name": "red chili pepper",
+    "food_score": 0.9,
+    "unit_score": 1.0
   },
   "5 tomatoes, finely chopped": {
-    "food": "mocked chicken",
-    "amount": 3,
+    "food": "tomato",
+    "amount": 5,
     "unit": "count",
-    "normalized_name": "chicken",
-    "food_score": 90,
-    "unit_score": 95
+    "normalized_name": "tomato",
+    "food_score": 0.95,
+    "unit_score": 1.0
   },
   "4 boneless chicken breasts, cut into bite-size pieces": {
-    "food": "mocked chicken",
-    "amount": 3,
+    "food": "chicken breast",
+    "amount": 4,
     "unit": "count",
-    "normalized_name": "chicken",
-    "food_score": 90,
-    "unit_score": 95
+    "normalized_name": "chicken breast",
+    "food_score": 0.9,
+    "unit_score": 1.0
   }
 }
