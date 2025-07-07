@@ -25,9 +25,19 @@ with tab1:
     conn = get_connection()
     st.write("📍 DB path in app:", conn.execute("PRAGMA database_list").fetchone()[2])
     st.markdown(f"📍 DB path in app: `{os.path.abspath('food_info.db')}`")
+
     st.subheader("🧬 Schema Debug")
-    st.code(conn.execute("PRAGMA table_info(ingredients)").fetchall())
-    st.code(conn.execute("PRAGMA table_info(food_info)").fetchall())
+
+    def format_table_schema(cursor, table_name):
+        return pd.DataFrame(
+            cursor.execute(f"PRAGMA table_info({table_name})").fetchall(),
+            columns=["cid", "name", "type", "notnull", "dflt_value", "pk"]
+        )
+
+    st.markdown("#### 🧾 Ingredients table schema")
+    st.dataframe(format_table_schema(conn, "ingredients"))
+
+    st.markdown("#### 🧾 Food_info table schema")
 
     st.write("📊 ALL recipe_ids in ingredients table:")
     recipe_ids_in_ingredients = pd.read_sql("SELECT DISTINCT recipe_id FROM ingredients", conn)
