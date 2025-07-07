@@ -1,4 +1,6 @@
+import sys
 import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import sqlite3
 import streamlit as st
 st.write("📦 app.py loaded")
