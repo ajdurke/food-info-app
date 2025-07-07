@@ -19,6 +19,7 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
+    st.write("🛠 Connected to:", os.path.abspath(db_path))
     st.write("📍 DB path in updater:", conn.execute("PRAGMA database_list").fetchone()[2])
 
     if init:

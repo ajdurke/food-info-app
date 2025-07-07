@@ -22,6 +22,8 @@ tab1, tab2 = st.tabs(["🍽 Recipes & Nutrition", "🧪 Review Matches"])
 with tab1:
     conn = get_connection()
     st.write("📍 DB path in app:", conn.execute("PRAGMA database_list").fetchone()[2])
+    st.markdown(f"📍 DB path in app: `{os.path.abspath('food_info.db')}`")
+
 
     @st.cache_data(ttl=600)
     def load_recipes():
