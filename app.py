@@ -57,11 +57,21 @@ with tab1:
         selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
         st.write("🔍 Debug: selected_id =", selected_id)
 
-        # Check if this recipe has unprocessed ingredients
-        raw_ingredient_count = pd.read_sql_query("""
-            SELECT COUNT(*) as count FROM ingredients
-            WHERE recipe_id = ? AND (normalized_name IS NULL OR amount IS NULL)
-        """, conn, params=(selected_id,)).iloc[0]["count"]
+        # # Check if this recipe has unprocessed ingredients
+        # raw_ingredient_count = pd.read_sql_query("""
+        #     SELECT COUNT(*) as count FROM ingredients
+        #     WHERE recipe_id = ? AND (normalized_name IS NULL OR amount IS NULL)
+        # """, conn, params=(selected_id,)).iloc[0]["count"]
+
+        # NEW: Display full ingredients table regardless of recipe_id
+        st.markdown("### 🐞 DEBUG: Full ingredients table")
+        df_all_ingredients = pd.read_sql_query("SELECT * FROM ingredients", conn)
+        st.dataframe(df_all_ingredients)
+
+        # Then filter by recipe_id only
+        st.markdown("### 🐞 DEBUG: Ingredients with selected recipe_id")
+        df_by_recipe = df_all_ingredients[df_all_ingredients["recipe_id"] == selected_id]
+        st.dataframe(df_by_recipe)
 
         if raw_ingredient_count > 0:
             st.warning("🔄 Some ingredients are unparsed — running updater...")
