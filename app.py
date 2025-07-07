@@ -34,6 +34,13 @@ with tab1:
             cursor.execute(f"PRAGMA table_info({table_name})").fetchall(),
             columns=["cid", "name", "type", "notnull", "dflt_value", "pk"]
         )
+    
+    st.markdown("### 🧪 Column Type Check for matched_food_id and food_info.id")
+    schema_check = conn.execute("PRAGMA table_info(ingredients)").fetchall()
+    for col in schema_check:
+        if col[1] in ("matched_food_id",):
+            st.write(f"{col[1]} → {col[2]}")  # col[2] = declared SQLite type
+
 
     st.markdown("#### 🧾 Ingredients table schema")
     st.dataframe(format_table_schema(conn, "ingredients"))
