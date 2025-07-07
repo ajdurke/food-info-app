@@ -78,7 +78,6 @@ with tab1:
         st.code(f"DEBUG SQL PARAMS — selected_id: {selected_id}")
 
         # 🔬 Raw SQL join output to validate matched_food_id join
-        st.markdown("### 🧪 Manual SQL Join Debug Output")
         debug_df = pd.read_sql_query("""
             SELECT i.id AS ingredient_id,
                 i.recipe_id,
