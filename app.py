@@ -83,6 +83,28 @@ with tab1:
         ingredients = pd.read_sql_query(query, conn, params=(selected_id,))
         ingredients = ingredients.fillna("—")
 
+
+        st.write("📌 Selected Recipe ID:", selected_id)
+
+        st.write("📌 Total ingredients with this recipe_id:")
+        total_ingredients = pd.read_sql("SELECT COUNT(*) AS count FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
+        st.write(total_ingredients)
+
+        st.write("📄 Raw ingredients for this recipe_id:")
+        raw = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
+        st.dataframe(raw)
+
+        st.write("⚠️ Ingredients missing match (matched_food_id is NULL):")
+        unmatched = pd.read_sql("""
+        SELECT * FROM ingredients
+        WHERE recipe_id = ? AND matched_food_id IS NULL
+        """, conn, params=(selected_id,))
+        st.dataframe(unmatched)
+
+        st.write("🧠 Sample food_info entries:")
+        food_info_check = pd.read_sql("SELECT id, normalized_name FROM food_info ORDER BY id DESC LIMIT 10", conn)
+        st.dataframe(food_info_check)
+
         st.markdown(f"### 🍴 Ingredients for '{selected}'")
         st.dataframe(ingredients)
 
@@ -119,3 +141,4 @@ with tab2:
     st.markdown("---")
     st.markdown("## 🧾 Ingredient Parsing Logs")
     show_review_log()
+
