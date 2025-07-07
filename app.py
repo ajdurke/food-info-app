@@ -1,5 +1,5 @@
 
-print("📦 app.py loaded")
+st.write("📦 app.py loaded")
 import os
 import sqlite3
 import streamlit as st
@@ -41,7 +41,7 @@ with tab1:
                 recipe_data = parse_recipe(url_input)
                 recipe_id = save_recipe_and_ingredients(recipe_data)
                 st.success(f"✅ Added '{recipe_data['title']}' to the database.")
-                print("🚀 Calling update_ingredients")
+                st.write("🚀 Calling update_ingredients")
                 update_ingredients(force=True)
                 match_ingredients()
                 st.rerun()

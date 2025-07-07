@@ -1,7 +1,6 @@
-print("✅ ingredient_updater.py loaded")
-
 """Parse raw ingredient text and store structured info, with LLM fallback and nutrition enrichment."""
-
+import streamlit as st
+st.write("✅ ingredient_updater.py loaded")
 import sqlite3
 import argparse
 from pathlib import Path
@@ -16,7 +15,7 @@ from food_project.database.sqlite_connector import init_db
 def update_ingredients(force=False, db_path="food_info.db", init=False, mock=False):
     """Update ingredients table with parsed amounts, units, match scores, LLM fallback, and nutrition."""
     abs_path = Path(db_path).resolve()
-    print(f"📂 Opening DB at: {abs_path}")
+    st.write(f"📂 Opening DB at: {abs_path}")
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
@@ -52,7 +51,7 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
         return
 
     total = cur.fetchone()[0]
-    print(f"📊 Total ingredients in DB: {total}")
+    st.write(f"📊 Total ingredients in DB: {total}")
 
     for column_def in [
         "ALTER TABLE ingredients ADD COLUMN amount REAL",
