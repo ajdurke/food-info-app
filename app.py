@@ -54,7 +54,7 @@ with tab1:
     st.dataframe(recipe_ids_in_ingredients)
 
 
-    @st.cache_data(ttl=600)
+    # @st.cache_data(ttl=600)
     def load_recipes():
         return pd.read_sql_query("SELECT id, recipe_title FROM recipes ORDER BY id DESC", conn)
 
