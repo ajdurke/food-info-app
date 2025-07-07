@@ -79,7 +79,7 @@ with tab1:
 
         # 🔬 Raw SQL join output to validate matched_food_id join
         st.markdown("### 🧪 Manual SQL Join Debug Output")
-        debug_join = conn.execute("""
+        debug_df = pd.read_sql_query("""
             SELECT i.id AS ingredient_id,
                 i.recipe_id,
                 i.food_name,
@@ -93,12 +93,13 @@ with tab1:
             FROM ingredients i
             LEFT JOIN food_info f ON i.matched_food_id = f.id
             WHERE i.recipe_id = ?
-        """, (selected_id,)).fetchall()
+        """, conn, params=(selected_id,))
 
-        if debug_join:
-            st.dataframe([dict(row) for row in debug_join])
-        else:
+        st.markdown("### 🧪 Manual SQL Join Debug Output")
+        if debug_df.empty:
             st.warning("⚠️ SQL join returned no rows.")
+        else:
+            st.dataframe(debug_df)
 
 
         # Check if this recipe has unprocessed ingredients
