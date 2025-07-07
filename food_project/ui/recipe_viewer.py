@@ -77,7 +77,7 @@ def match_ingredient(name, candidate_names, threshold=85):
     return match if score >= threshold else None
 
 def show_recipe_viewer():
-    if st.button("Refresh Data"):
+    if st.button("Refresh Data", key="refresh_recipe_viewer"):
         st.cache_data.clear()
         st.rerun()
 
