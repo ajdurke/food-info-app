@@ -1,4 +1,5 @@
 
+print("📦 app.py loaded")
 import os
 import sqlite3
 import streamlit as st
