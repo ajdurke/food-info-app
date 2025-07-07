@@ -19,7 +19,7 @@ def get_fuzzy_matches():
         ORDER BY i.fuzz_score DESC
     """).fetchall()
     conn.close()
-    return list(rows)
+    return [dict(row) for row in rows]
 
 def update_match(ing_id, food_id, match_type, fuzz_score=100):
     conn = sqlite3.connect(DB_PATH)
