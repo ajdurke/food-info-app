@@ -38,6 +38,8 @@ with tab1:
     st.dataframe(format_table_schema(conn, "ingredients"))
 
     st.markdown("#### 🧾 Food_info table schema")
+    st.dataframe(format_table_schema(conn, "food_info"))
+
 
     st.write("📊 ALL recipe_ids in ingredients table:")
     recipe_ids_in_ingredients = pd.read_sql("SELECT DISTINCT recipe_id FROM ingredients", conn)
