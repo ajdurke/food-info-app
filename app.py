@@ -25,6 +25,9 @@ with tab1:
     conn = get_connection()
     st.write("📍 DB path in app:", conn.execute("PRAGMA database_list").fetchone()[2])
     st.markdown(f"📍 DB path in app: `{os.path.abspath('food_info.db')}`")
+    st.subheader("🧬 Schema Debug")
+    st.code(conn.execute("PRAGMA table_info(ingredients)").fetchall())
+    st.code(conn.execute("PRAGMA table_info(food_info)").fetchall())
 
     st.write("📊 ALL recipe_ids in ingredients table:")
     recipe_ids_in_ingredients = pd.read_sql("SELECT DISTINCT recipe_id FROM ingredients", conn)
