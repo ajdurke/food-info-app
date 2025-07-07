@@ -1,4 +1,3 @@
-# app.py
 
 import os
 import sqlite3
@@ -22,23 +21,18 @@ st.title("📊 Food Info Tracker" + (" — Staging" if branch == "staging" else 
 # Set up tabs
 tab1, tab2 = st.tabs(["🍽 Recipes & Nutrition", "🧪 Review Matches"])
 
-# --------------------------------------------
-# Tab 1: Recipe Viewer + Add New Recipe
-# --------------------------------------------
 with tab1:
     conn = get_connection()
 
-    # Fetch existing recipes
     @st.cache_data(ttl=600)
     def load_recipes():
-        df = pd.read_sql_query("SELECT id, recipe_title FROM recipes ORDER BY id DESC", conn)
-        return df
+        return pd.read_sql_query("SELECT id, recipe_title FROM recipes ORDER BY id DESC", conn)
 
     recipes_df = load_recipes()
     recipe_options = recipes_df["recipe_title"].tolist()
     selected = st.selectbox("Select an existing recipe:", ["-- Select --"] + recipe_options)
 
-    # Option to add a new recipe from URL
+    # Add new recipe
     st.markdown("### 📥 Add New Recipe")
     url_input = st.text_input("Paste recipe URL:")
     if st.button("Add Recipe from URL"):
@@ -55,16 +49,21 @@ with tab1:
         else:
             st.warning("Please enter a valid recipe URL.")
 
-    # Nutrition display for selected recipe
     if selected and selected != "-- Select --":
         selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
-        query = f"""
+        st.write("🔍 Debug: selected_id =", selected_id)
+
+        df_debug = pd.read_sql_query("SELECT * FROM ingredients", conn)
+        st.write("🔍 All ingredients table:", df_debug)
+
+        query = """
             SELECT i.food_name, i.amount, i.unit, i.normalized_name, f.calories, f.protein, f.carbs, f.fat
             FROM ingredients i
             LEFT JOIN food_info f ON i.matched_food_id = f.id
             WHERE i.recipe_id = ?
         """
         ingredients = pd.read_sql_query(query, conn, params=(selected_id,))
+        ingredients = ingredients.fillna("—")
 
         st.markdown(f"### 🍴 Ingredients for '{selected}'")
         st.dataframe(ingredients)
@@ -73,28 +72,24 @@ with tab1:
         if ingredients.empty:
             st.info("No ingredients found.")
         else:
-            missing = ingredients[ingredients["calories"].isnull()]
+            missing = ingredients[ingredients["calories"] == "—"]
             if not missing.empty:
                 st.warning(f"⚠️ Missing nutrition data for: {', '.join(missing['food_name'])}")
 
-            totals = ingredients[["calories", "protein", "carbs", "fat"]].sum(numeric_only=True)
+            totals = ingredients[["calories", "protein", "carbs", "fat"]].replace("—", 0).astype(float).sum()
             st.table(totals.rename("Total"))
 
-# --------------------------------------------
-# Tab 2: Review Matches, Normalization, LLM
-# --------------------------------------------
 with tab2:
     st.markdown("## 🧪 Review Fuzzy Matches")
     matches = get_fuzzy_matches()
     if not matches:
         st.success("✅ No fuzzy matches to review.")
     else:
-        for row in matches[:20]:  # Display first 20
-            with st.expander(f"{row.get('raw_name', '—')} → {row.get('matched_food', '—')}"):
-                st.markdown(f"- **Normalized:** `{row.get('normalized_name', '—')}`")
-                st.markdown(f"- **Fuzz Score:** `{row.get('fuzz_score', '—')}`")
-                st.markdown(f"- **Match Type:** `{row.get('match_type', '—')}`")
-
+        for row in matches[:20]:
+            with st.expander(f"{row['raw_name']} → {row['matched_food']}"):
+                st.markdown(f"- **Normalized:** `{row['normalized_name']}`")
+                st.markdown(f"- **Fuzz Score:** `{row['fuzz_score']}`")
+                st.markdown(f"- **Match Type:** `{row['match_type']}`")
         st.info("More detailed review available via CLI or future admin tab.")
 
     st.markdown("---")
