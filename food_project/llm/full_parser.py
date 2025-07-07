@@ -21,6 +21,7 @@ MODEL = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
 DAILY_LIMIT = 100
 
 print("🔍 DEBUG Together API key loaded:", TOGETHER_API_KEY)
+
 client = Together(api_key=TOGETHER_API_KEY)
 
 
