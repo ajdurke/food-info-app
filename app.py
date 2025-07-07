@@ -85,10 +85,6 @@ with tab1:
         else:
             st.write("No matched_food_id values found.")
 
-        st.write("🔎 Data types of matched_food_id and food_info.id")
-        st.code(str(df_by_recipe.dtypes))
-        st.code(str(food_info_check.dtypes))
-
         if raw_ingredient_count > 0:
             st.warning("🔄 Some ingredients are unparsed — running updater...")
             update_ingredients(force=True)
@@ -132,6 +128,10 @@ with tab1:
         st.write("🧠 Sample food_info entries:")
         food_info_check = pd.read_sql("SELECT id, normalized_name FROM food_info ORDER BY id DESC LIMIT 10", conn)
         st.dataframe(food_info_check)
+
+        st.write("🔎 Data types of matched_food_id and food_info.id")
+        st.code(str(df_by_recipe.dtypes))
+        st.code(str(food_info_check.dtypes))
 
         st.markdown(f"### 🍴 Ingredients for '{selected}'")
         st.dataframe(ingredients)
