@@ -1,10 +1,8 @@
-
-st.write("📦 app.py loaded")
 import os
 import sqlite3
 import streamlit as st
+st.write("📦 app.py loaded")
 import pandas as pd
-
 from food_project.database.sqlite_connector import get_connection
 from food_project.database.nutritionix_service import get_nutrition_data
 from food_project.database.sqlite_connector import save_recipe_and_ingredients
