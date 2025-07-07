@@ -1,3 +1,5 @@
+print("✅ ingredient_updater.py loaded")
+
 """Parse raw ingredient text and store structured info, with LLM fallback and nutrition enrichment."""
 
 import sqlite3
