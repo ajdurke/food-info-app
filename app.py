@@ -77,6 +77,10 @@ with tab1:
         selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
         st.code(f"DEBUG SQL PARAMS — selected_id: {selected_id}")
 
+        st.markdown("### 🧪 Ingredients with recipe_id = 3 (raw check)")
+        check_df = pd.read_sql("SELECT id, recipe_id, food_name, matched_food_id FROM ingredients WHERE recipe_id = 3", conn)
+        st.dataframe(check_df)
+
         # 🔬 Raw SQL join output to validate matched_food_id join
         debug_df = pd.read_sql_query("""
             SELECT i.id AS ingredient_id,
