@@ -12,7 +12,7 @@ def get_fuzzy_matches():
     cur = conn.cursor()
     rows = cur.execute("""
         SELECT i.id, i.food_name AS raw_name, i.normalized_name, i.fuzz_score,
-               f.normalized_name AS matched_food, f.id AS food_id
+               i.match_type,f.normalized_name AS matched_food, f.id AS food_id
         FROM ingredients i
         JOIN food_info f ON i.matched_food_id = f.id
         WHERE i.match_type = 'fuzzy'

@@ -90,10 +90,11 @@ with tab2:
         st.success("✅ No fuzzy matches to review.")
     else:
         for row in matches[:20]:  # Display first 20
-            with st.expander(f"{row['raw_name']} → {row['matched_food']}"):
-                st.markdown(f"- **Normalized:** `{row['normalized_name']}`")
-                st.markdown(f"- **Fuzz Score:** `{row['fuzz_score']}`")
-                st.markdown(f"- **Match Type:** `{row['match_type']}`")
+            with st.expander(f"{row.get('raw_name', '—')} → {row.get('matched_food', '—')}"):
+                st.markdown(f"- **Normalized:** `{row.get('normalized_name', '—')}`")
+                st.markdown(f"- **Fuzz Score:** `{row.get('fuzz_score', '—')}`")
+                st.markdown(f"- **Match Type:** `{row.get('match_type', '—')}`")
+
         st.info("More detailed review available via CLI or future admin tab.")
 
     st.markdown("---")
