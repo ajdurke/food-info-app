@@ -26,6 +26,10 @@ with tab1:
     st.write("📍 DB path in app:", conn.execute("PRAGMA database_list").fetchone()[2])
     st.markdown(f"📍 DB path in app: `{os.path.abspath('food_info.db')}`")
 
+    st.write("📊 ALL recipe_ids in ingredients table:")
+    recipe_ids_in_ingredients = pd.read_sql("SELECT DISTINCT recipe_id FROM ingredients", conn)
+    st.dataframe(recipe_ids_in_ingredients)
+
 
     @st.cache_data(ttl=600)
     def load_recipes():
