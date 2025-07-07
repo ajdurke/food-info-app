@@ -85,6 +85,10 @@ with tab1:
         else:
             st.write("No matched_food_id values found.")
 
+        st.write("🔎 Data types of matched_food_id and food_info.id")
+        st.code(str(df_by_recipe.dtypes))
+        st.code(str(food_info_check.dtypes))
+
         if raw_ingredient_count > 0:
             st.warning("🔄 Some ingredients are unparsed — running updater...")
             update_ingredients(force=True)
