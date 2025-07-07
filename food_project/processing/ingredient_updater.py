@@ -4,7 +4,7 @@ print("✅ ingredient_updater.py loaded")
 
 import sqlite3
 import argparse
-
+from pathlib import Path
 from food_project.processing.normalization import parse_ingredient
 from food_project.processing.validator import score_food_match, score_unit
 from food_project.processing.units import COMMON_UNITS
@@ -15,6 +15,8 @@ from food_project.database.sqlite_connector import init_db
 
 def update_ingredients(force=False, db_path="food_info.db", init=False, mock=False):
     """Update ingredients table with parsed amounts, units, match scores, LLM fallback, and nutrition."""
+    abs_path = Path(db_path).resolve()
+    print(f"📂 Opening DB at: {abs_path}")
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
