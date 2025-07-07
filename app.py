@@ -68,6 +68,11 @@ with tab1:
         df_all_ingredients = pd.read_sql_query("SELECT * FROM ingredients", conn)
         st.dataframe(df_all_ingredients)
 
+        # Then filter by recipe_id only
+        st.markdown("### 🐞 DEBUG: Ingredients with selected recipe_id")
+        df_by_recipe = df_all_ingredients[df_all_ingredients["recipe_id"] == selected_id]
+        st.dataframe(df_by_recipe)
+
         # Add this to your debug section:
         st.write("🔬 Matched food_info nutrition values:")
         matched_ids = tuple(df_by_recipe["matched_food_id"].dropna().astype(int))
@@ -79,11 +84,6 @@ with tab1:
             """, conn))
         else:
             st.write("No matched_food_id values found.")
-
-        # Then filter by recipe_id only
-        st.markdown("### 🐞 DEBUG: Ingredients with selected recipe_id")
-        df_by_recipe = df_all_ingredients[df_all_ingredients["recipe_id"] == selected_id]
-        st.dataframe(df_by_recipe)
 
         if raw_ingredient_count > 0:
             st.warning("🔄 Some ingredients are unparsed — running updater...")
