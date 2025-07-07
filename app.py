@@ -53,7 +53,6 @@ with tab1:
         else:
             st.warning("Please enter a valid recipe URL.")
 
-    st.write("🧮 Raw ingredient count:", raw_ingredient_count)
     if selected and selected != "-- Select --":
         selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
         st.write("🔍 Debug: selected_id =", selected_id)
