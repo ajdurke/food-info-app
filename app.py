@@ -68,13 +68,13 @@ with tab1:
         # Pull parsed ingredients
         query = """
             SELECT i.food_name,
-                   i.amount,
-                   i.unit,
-                   i.normalized_name,
-                   f.calories,
-                   f.protein,
-                   f.carbs,
-                   f.fat
+                COALESCE(i.amount, i.quantity) AS amount,
+                i.unit,
+                i.normalized_name,
+                f.calories,
+                f.protein,
+                f.carbs,
+                f.fat
             FROM ingredients i
             LEFT JOIN food_info f ON i.matched_food_id = f.id
             WHERE i.recipe_id = ?
