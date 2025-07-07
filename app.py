@@ -74,7 +74,7 @@ with tab1:
 
     if selected and selected != "-- Select --":
         selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
-        st.write("🔍 Debug: selected_id =", selected_id)
+        st.code(f"DEBUG SQL PARAMS — selected_id: {selected_id}")
 
         # 🔬 Raw SQL join output to validate matched_food_id join
         st.markdown("### 🧪 Manual SQL Join Debug Output")
@@ -134,22 +134,38 @@ with tab1:
             match_ingredients()
 
         # Pull parsed ingredients
-        query = """
-            SELECT i.food_name,
-                i.amount,
-                i.quantity,
-                i.unit,
-                i.normalized_name,
+        # query = """
+        #     SELECT i.food_name,
+        #         i.amount,
+        #         i.quantity,
+        #         i.unit,
+        #         i.normalized_name,
+        #         i.matched_food_id,
+        #         f.calories,
+        #         f.protein,
+        #         f.carbs,
+        #         f.fat
+        #     FROM ingredients i
+        #     LEFT JOIN food_info f ON i.matched_food_id = f.id
+        #     WHERE i.recipe_id = ?
+        # """
+        # ingredients = pd.read_sql_query(query, conn, params=(selected_id,))
+        ingredients = pd.read_sql_query("""
+            SELECT
+                i.id AS ingredient_id,
+                i.recipe_id,
+                i.food_name,
                 i.matched_food_id,
+                f.id AS food_info_id,
+                f.normalized_name,
                 f.calories,
                 f.protein,
                 f.carbs,
                 f.fat
             FROM ingredients i
             LEFT JOIN food_info f ON i.matched_food_id = f.id
-            WHERE i.recipe_id = ?
-        """
-        ingredients = pd.read_sql_query(query, conn, params=(selected_id,))
+            WHERE i.recipe_id = 3;
+        """, conn)
 
         # Show raw values before formatting
         st.markdown("### 🧪 Raw parsed ingredient join result")
