@@ -76,6 +76,30 @@ with tab1:
         selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
         st.write("🔍 Debug: selected_id =", selected_id)
 
+        # 🔬 Raw SQL join output to validate matched_food_id join
+        st.markdown("### 🧪 Manual SQL Join Debug Output")
+        debug_join = conn.execute("""
+            SELECT i.id AS ingredient_id,
+                i.recipe_id,
+                i.food_name,
+                i.matched_food_id,
+                f.id AS food_info_id,
+                f.normalized_name,
+                f.calories,
+                f.protein,
+                f.carbs,
+                f.fat
+            FROM ingredients i
+            LEFT JOIN food_info f ON i.matched_food_id = f.id
+            WHERE i.recipe_id = ?
+        """, (selected_id,)).fetchall()
+
+        if debug_join:
+            st.dataframe([dict(row) for row in debug_join])
+        else:
+            st.warning("⚠️ SQL join returned no rows.")
+
+
         # Check if this recipe has unprocessed ingredients
         raw_ingredient_count = pd.read_sql_query("""
             SELECT COUNT(*) as count FROM ingredients
