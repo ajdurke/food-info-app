@@ -30,5 +30,545 @@
     "normalized_name": "chicken breast",
     "food_score": 0.9,
     "unit_score": 1.0
+  },
+  "8 bone-in, skin-on chicken thighs (about 3 pounds)": {
+    "food": "chicken thighs",
+    "amount": 8,
+    "unit": "count",
+    "normalized_name": "chicken thigh",
+    "food_score": 0.9,
+    "unit_score": 1.0,
+    "weight": 3,
+    "weight_unit": "pound"
+  },
+  "Kosher salt and freshly ground black pepper": {
+    "food": "Kosher salt",
+    "amount": null,
+    "unit": null,
+    "normalized_name": "salt",
+    "food_score": 0.9,
+    "unit_score": null
+  },
+  "1 tablespoon olive oil": {
+    "food": "olive oil",
+    "amount": 1,
+    "unit": "tablespoon",
+    "normalized_name": "olive oil",
+    "food_score": 0.99,
+    "unit_score": 1.0
+  },
+  "1 cup pitted kalamata olives": {
+    "food": "kalamata olives",
+    "amount": 1,
+    "unit": "cup",
+    "normalized_name": "olive",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 1/2 teaspoons dried oregano": {
+    "food": "oregano",
+    "amount": 1.5,
+    "unit": "teaspoon",
+    "normalized_name": "oregano",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "1 cup whole-milk Greek yogurt": {
+    "food": "yogurt",
+    "amount": 1,
+    "unit": "cup",
+    "normalized_name": "greek yogurt",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1/4 cup fresh flat-leaf parsley, roughly chopped": {
+    "food": "parsley",
+    "amount": 0.25,
+    "unit": "cup",
+    "normalized_name": "parsley",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "2 tablespoons fresh mint leaves, roughly chopped": {
+    "food": "mint",
+    "amount": 2,
+    "unit": "tablespoon",
+    "normalized_name": "mint",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 teaspoon lemon zest plus 1 tablespoon lemon juice": {
+    "food": "lemon zest",
+    "amount": 1,
+    "unit": "teaspoon",
+    "normalized_name": "lemon",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "2 cups water": {
+    "food": "water",
+    "amount": 2,
+    "unit": "cup",
+    "normalized_name": "water",
+    "food_score": 0.99,
+    "unit_score": 1.0
+  },
+  "1 (12 ounce) package frozen corn and black bean vegetable blend (such as Archer Farms\u00ae)": {
+    "food": "frozen corn and black bean vegetable blend",
+    "amount": 1,
+    "unit": "package",
+    "normalized_name": "corn and black bean blend",
+    "food_score": 0.8,
+    "unit_score": 1.0
+  },
+  "Homemade Pie Crust or All Butter Pie Crust (both recipes make 2 crusts, 1 for bottom and 1 for top)": {
+    "food": "pie crust",
+    "amount": 2,
+    "unit": "count",
+    "normalized_name": "pie crust",
+    "food_score": 0.8,
+    "unit_score": 1.0
+  },
+  "1 pound (450g) skinless boneless chicken breast or thighs, cubed": {
+    "food": "chicken breast or thighs",
+    "amount": 1,
+    "unit": "pound",
+    "normalized_name": "chicken breast",
+    "food_score": 0.9,
+    "unit_score": 1.0,
+    "alternative_unit": "grams",
+    "alternative_amount": 450
+  },
+  "3/4 teaspoon salt": {
+    "food": "salt",
+    "amount": 0.75,
+    "unit": "teaspoon",
+    "normalized_name": "salt",
+    "food_score": 1.0,
+    "unit_score": 1.0
+  },
+  "1/2 teaspoon freshly ground black pepper": {
+    "food": "black pepper",
+    "amount": 0.5,
+    "unit": "teaspoon",
+    "normalized_name": "black pepper",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 and 3/4 cups (420ml) chicken broth/stock (I recommend reduced sodium)": {
+    "food": "chicken broth/stock",
+    "amount": 1.75,
+    "unit": "cups",
+    "normalized_name": "chicken broth",
+    "food_score": 0.9,
+    "unit_score": 1.0,
+    "alternative_unit": "milliliters",
+    "alternative_amount": 420
+  },
+  "2/3 cup (160ml) half-and-half*": {
+    "food": "half-and-half",
+    "amount": 0.67,
+    "unit": "cup",
+    "normalized_name": "half and half",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "egg wash: 1 large egg beaten with 1 Tablespoon (15ml) milk": {
+    "food": "egg",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "egg",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "optional: sprigs of fresh thyme for garnish": {
+    "food": "thyme",
+    "amount": null,
+    "unit": "sprigs",
+    "normalized_name": "thyme",
+    "food_score": 0.9,
+    "unit_score": 0.8
+  },
+  "1 recipe Homemade pie dough (, chilled (our recipes makes 2 crusts, needed for this recipe; one for the top, and one for the bottom)": {
+    "food": "Homemade pie dough",
+    "amount": 1,
+    "unit": "recipe",
+    "normalized_name": "pie dough",
+    "food_score": 0.8,
+    "unit_score": 1.0
+  },
+  "1/3 cup butter (75 g)": {
+    "food": "butter",
+    "amount": 0.33,
+    "unit": "cup",
+    "normalized_name": "butter",
+    "food_score": 0.95,
+    "unit_score": 1.0,
+    "alternative_unit": "g",
+    "alternative_amount": 75
+  },
+  "1/2 teaspoon salt (2.5 g)": {
+    "food": "salt",
+    "amount": 0.5,
+    "unit": "teaspoon",
+    "normalized_name": "salt",
+    "food_score": 1.0,
+    "unit_score": 1.0
+  },
+  "1/4 teaspoon freshly ground black pepper (0.5 g)": {
+    "food": "black pepper",
+    "amount": 0.5,
+    "unit": "gram",
+    "normalized_name": "black pepper",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1/4 teaspoon celery seed (0.5 g)": {
+    "food": "celery seed",
+    "amount": 0.25,
+    "unit": "teaspoon",
+    "normalized_name": "celery seed",
+    "food_score": 0.9,
+    "unit_score": 1.0,
+    "alternative_unit": "gram",
+    "alternative_amount": 0.5
+  },
+  "1/2 teaspoon garlic powder (1.5 g)": {
+    "food": "garlic powder",
+    "amount": 0.5,
+    "unit": "teaspoon",
+    "normalized_name": "garlic powder",
+    "food_score": 0.9,
+    "unit_score": 1.0,
+    "alternative_amount": 1.5,
+    "alternative_unit": "gram"
+  },
+  "1 teaspoon chicken bouillon paste (, or more to taste (or substitute 1 bouillon cube) (5 g)": {
+    "food": "chicken bouillon paste",
+    "amount": 1,
+    "unit": "teaspoon",
+    "normalized_name": "chicken bouillon paste",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "8 ounces frozen veggies (mix of carrots, peas, green beans, and corn) (225 g)": {
+    "food": "frozen veggies",
+    "amount": 8,
+    "unit": "ounces",
+    "normalized_name": "mixed frozen vegetables",
+    "food_score": 0.8,
+    "unit_score": 1.0
+  },
+  "1 egg": {
+    "food": "egg",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "egg",
+    "food_score": 0.99,
+    "unit_score": 1.0
+  },
+  "8 tablespoons (1 stick) unsalted butter, sliced": {
+    "food": "butter",
+    "amount": 8,
+    "unit": "tablespoon",
+    "normalized_name": "unsalted butter",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 medium (1 1/2 cups) white onion, diced": {
+    "food": "white onion",
+    "amount": 1.5,
+    "unit": "cups",
+    "normalized_name": "onion",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 rotisserie chicken": {
+    "food": "chicken",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "chicken",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "2 cups (about 8 ounces) frozen peas and carrots blend, thawed and drained of excess water": {
+    "food": "peas and carrots blend",
+    "amount": 2,
+    "unit": "cups",
+    "normalized_name": "peas and carrots",
+    "food_score": 0.8,
+    "unit_score": 1.0
+  },
+  "1 1/2 teaspoons fresh rosemary, stems removed and roughly chopped, or 3/4 teaspoons dried rosemary": {
+    "food": "rosemary",
+    "amount": 1.5,
+    "unit": "teaspoon",
+    "normalized_name": "rosemary",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 1/2 teaspoons fresh thyme leaves, stems removed or 3/4 teaspoons dried": {
+    "food": "thyme",
+    "amount": 1.5,
+    "unit": "teaspoons",
+    "normalized_name": "thyme",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 1/2 teaspoons fresh sage, roughly chopped or 3/4 teaspoons dried": {
+    "food": "sage",
+    "amount": 1.5,
+    "unit": "teaspoon",
+    "normalized_name": "sage",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "1/2 teaspoon kosher salt": {
+    "food": "kosher salt",
+    "amount": 0.5,
+    "unit": "teaspoon",
+    "normalized_name": "salt",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1/4 teaspoon black pepper": {
+    "food": "black pepper",
+    "amount": 0.25,
+    "unit": "teaspoon",
+    "normalized_name": "black pepper",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "1 large egg yolk": {
+    "food": "egg yolk",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "egg yolk",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 tablespoon cold water": {
+    "food": "water",
+    "amount": 1,
+    "unit": "tablespoon",
+    "normalized_name": "water",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "Salt, optional": {
+    "food": "salt",
+    "amount": null,
+    "unit": null,
+    "normalized_name": "salt",
+    "food_score": 0.95,
+    "unit_score": null
+  },
+  "4 skinless chicken breast halves, with ribs": {
+    "food": "chicken breast",
+    "amount": 4,
+    "unit": "count",
+    "normalized_name": "chicken breast",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "2 skinless chicken thighs, with bones": {
+    "food": "chicken thigh",
+    "amount": 2,
+    "unit": "count",
+    "normalized_name": "chicken thigh",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1/2 teaspoon salt, plus 1 teaspoon": {
+    "food": "salt",
+    "amount": 0.5,
+    "unit": "teaspoon",
+    "normalized_name": "salt",
+    "food_score": 1.0,
+    "unit_score": 1.0
+  },
+  "1/2 teaspoon freshly ground black pepper, plus 1 teaspoon": {
+    "food": "black pepper",
+    "amount": 1.5,
+    "unit": "teaspoon",
+    "normalized_name": "black pepper",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1/4 cup olive oil": {
+    "food": "olive oil",
+    "amount": 0.25,
+    "unit": "cup",
+    "normalized_name": "olive oil",
+    "food_score": 0.99,
+    "unit_score": 1.0
+  },
+  "1 red bell pepper, sliced": {
+    "food": "red bell pepper",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "bell pepper",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 yellow bell pepper, sliced": {
+    "food": "yellow bell pepper",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "bell pepper",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "3 ounces prosciutto, chopped": {
+    "food": "prosciutto",
+    "amount": 3,
+    "unit": "ounces",
+    "normalized_name": "prosciutto",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "1/2 cup white wine": {
+    "food": "white wine",
+    "amount": 0.5,
+    "unit": "cup",
+    "normalized_name": "white wine",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 teaspoon fresh oregano leaves": {
+    "food": "oregano",
+    "amount": 1,
+    "unit": "teaspoon",
+    "normalized_name": "oregano",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1/4 cup chopped fresh flat-leaf parsley leaves": {
+    "food": "parsley",
+    "amount": 0.25,
+    "unit": "cup",
+    "normalized_name": "parsley",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "\u00bc cup (or more) plus 2 Tbsp. extra-virgin olive oil, divided": {
+    "food": "olive oil",
+    "amount": 0.25,
+    "unit": "cup",
+    "normalized_name": "olive oil",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 medium Japanese eggplant, halved lengthwise, sliced \u00bc\" thick into half-moons": {
+    "food": "Japanese eggplant",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "eggplant",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 medium summer squash, halved lengthwise, sliced \u00bc\" thick into half-moons": {
+    "food": "summer squash",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "summer squash",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 medium zucchini, halved lengthwise, sliced \u00bc\" thick into half-moons": {
+    "food": "zucchini",
+    "amount": 1,
+    "unit": "count",
+    "normalized_name": "zucchini",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "Kosher salt, freshly ground pepper": {
+    "food": "Kosher salt",
+    "amount": null,
+    "unit": null,
+    "normalized_name": "salt",
+    "food_score": 0.8,
+    "unit_score": null
+  },
+  "2 medium ears of corn, husked, kernels removed (about 2 cups)": {
+    "food": "corn",
+    "amount": 2,
+    "unit": "cups",
+    "normalized_name": "corn",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 pint cherry tomatoes (about 8 oz.), halved": {
+    "food": "cherry tomatoes",
+    "amount": 1,
+    "unit": "pint",
+    "normalized_name": "cherry tomato",
+    "food_score": 0.92,
+    "unit_score": 1.0
+  },
+  "\u00bc cup double-concentrated tomato paste": {
+    "food": "tomato paste",
+    "amount": 0.25,
+    "unit": "cup",
+    "normalized_name": "tomato paste",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "8 garlic cloves, finely grated": {
+    "food": "garlic",
+    "amount": 8,
+    "unit": "cloves",
+    "normalized_name": "garlic",
+    "food_score": 0.99,
+    "unit_score": 0.95
+  },
+  "\u00bd tsp. crushed red pepper flakes": {
+    "food": "crushed red pepper flakes",
+    "amount": 0.5,
+    "unit": "teaspoon",
+    "normalized_name": "red pepper flakes",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "12 oz. small shells or other short pasta": {
+    "food": "pasta",
+    "amount": 12,
+    "unit": "oz",
+    "normalized_name": "pasta",
+    "food_score": 0.8,
+    "unit_score": 1.0
+  },
+  "3 oz. Parmesan, finely grated (about 1\u00bd cups)": {
+    "food": "Parmesan",
+    "amount": 3,
+    "unit": "oz",
+    "normalized_name": "parmesan cheese",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "4 Tbsp. unsalted butter, cut into pieces": {
+    "food": "unsalted butter",
+    "amount": 4,
+    "unit": "tablespoon",
+    "normalized_name": "butter",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "1 large bunch basil, leaves picked": {
+    "food": "basil",
+    "amount": 1,
+    "unit": "bunch",
+    "normalized_name": "basil",
+    "food_score": 0.95,
+    "unit_score": 0.8
+  },
+  "Crumbled feta (for serving)": {
+    "food": "feta",
+    "amount": null,
+    "unit": null,
+    "normalized_name": "feta cheese",
+    "food_score": 0.9,
+    "unit_score": null
   }
 }
