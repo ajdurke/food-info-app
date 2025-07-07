@@ -29,7 +29,7 @@ except Exception as e:
 tab1, tab2, tab3 = st.tabs(["📋 Recipes", "🔍 Ingredient Matcher", "🧪 Review Log"])
 
 with tab1:
-    recipe_viewer.display_recipes()
+    recipe_viewer.show_recipe_viewer()
 
 with tab2:
     st.write("Ingredient matcher not yet implemented here.")
