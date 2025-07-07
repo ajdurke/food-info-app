@@ -53,15 +53,16 @@ with tab1:
         else:
             st.warning("Please enter a valid recipe URL.")
 
+    st.write("🧮 Raw ingredient count:", raw_ingredient_count)
     if selected and selected != "-- Select --":
         selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
         st.write("🔍 Debug: selected_id =", selected_id)
 
-        # # Check if this recipe has unprocessed ingredients
-        # raw_ingredient_count = pd.read_sql_query("""
-        #     SELECT COUNT(*) as count FROM ingredients
-        #     WHERE recipe_id = ? AND (normalized_name IS NULL OR amount IS NULL)
-        # """, conn, params=(selected_id,)).iloc[0]["count"]
+        # Check if this recipe has unprocessed ingredients
+        raw_ingredient_count = pd.read_sql_query("""
+            SELECT COUNT(*) as count FROM ingredients
+            WHERE recipe_id = ? AND (normalized_name IS NULL OR amount IS NULL)
+        """, conn, params=(selected_id,)).iloc[0]["count"]
 
         # NEW: Display full ingredients table regardless of recipe_id
         st.markdown("### 🐞 DEBUG: Full ingredients table")
