@@ -1,28 +1,28 @@
 """LLM fallback parser using Together API with prompt templating and usage limits."""
 
 import re
+import os
 from pathlib import Path
 from dotenv import load_dotenv
-import os
-import streamlit as st
 from together import Together
 
 # -------------------------------
 # ✅ Load environment and config
 # -------------------------------
 load_dotenv()
-TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY") or st.secrets["together"]["api_key"]
 
+def get_together_client():
+    import streamlit as st
+    api_key = os.getenv("TOGETHER_API_KEY") or st.secrets["together"]["api_key"]
+    print("🔍 DEBUG Together API key loaded:", api_key[:6] + "..." if api_key else "None")
+    return Together(api_key=api_key)
+
+client = get_together_client()
 
 CACHE_PATH = Path("llm_full_parser_cache.json")
 USAGE_LOG = Path("together_llm_usage.json")
-TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
 MODEL = "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free"
 DAILY_LIMIT = 100
-
-print("🔍 DEBUG Together API key loaded:", TOGETHER_API_KEY)
-
-client = Together(api_key=TOGETHER_API_KEY)
 
 
 # ----------------------------
