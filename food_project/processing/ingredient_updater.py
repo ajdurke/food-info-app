@@ -182,7 +182,15 @@ def main():
     parser.add_argument("--force", action="store_true", help="Force reprocessing of all ingredients")
     parser.add_argument("--mock", action="store_true", help="Use mock LLM and API responses")
     args = parser.parse_args()
-    update_ingredients(force=args.force, db_path=args.db, init=args.init, mock=args.mock)
 
+    update_ingredients(
+        force=args.force,
+        db_path=args.db,
+        init=args.init,
+        mock=args.mock
+    )
+
+# Only run main() if executed as script
 if __name__ == "__main__":
     main()
+

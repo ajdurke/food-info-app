@@ -10,7 +10,6 @@ from food_project.database.sqlite_connector import save_recipe_and_ingredients
 from food_project.ingestion.parse_recipe_url import parse_recipe
 from food_project.ui.review_log_viewer import show_review_log
 from food_project.ui.review_matches_app import get_fuzzy_matches
-
 from food_project.processing.ingredient_updater import update_ingredients
 from food_project.ingestion.match_ingredients_to_food_info import match_ingredients
 
