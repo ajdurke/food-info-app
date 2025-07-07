@@ -54,11 +54,27 @@ with tab1:
         selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
         st.write("🔍 Debug: selected_id =", selected_id)
 
-        df_debug = pd.read_sql_query("SELECT * FROM ingredients", conn)
-        st.write("🔍 All ingredients table:", df_debug)
+        # Check if this recipe has unprocessed ingredients
+        raw_ingredient_count = pd.read_sql_query("""
+            SELECT COUNT(*) as count FROM ingredients
+            WHERE recipe_id = ? AND (normalized_name IS NULL OR amount IS NULL)
+        """, conn, params=(selected_id,)).iloc[0]["count"]
 
+        if raw_ingredient_count > 0:
+            st.warning("🔄 Some ingredients are unparsed — running updater...")
+            update_ingredients(force=True)
+            match_ingredients()
+
+        # Pull parsed ingredients
         query = """
-            SELECT i.food_name, i.quantity AS amount, i.unit, i.normalized_name, f.calories, f.protein, f.carbs, f.fat
+            SELECT i.food_name,
+                   i.amount,
+                   i.unit,
+                   i.normalized_name,
+                   f.calories,
+                   f.protein,
+                   f.carbs,
+                   f.fat
             FROM ingredients i
             LEFT JOIN food_info f ON i.matched_food_id = f.id
             WHERE i.recipe_id = ?
@@ -76,9 +92,15 @@ with tab1:
             missing = ingredients[ingredients["calories"] == "—"]
             if not missing.empty:
                 st.warning(f"⚠️ Missing nutrition data for: {', '.join(missing['food_name'])}")
-
             totals = ingredients[["calories", "protein", "carbs", "fat"]].replace("—", 0).astype(float).sum()
             st.table(totals.rename("Total"))
+
+        # Debug preview
+        st.write("🧾 Sample of parsed ingredients:")
+        st.dataframe(pd.read_sql_query(
+            "SELECT id, food_name, quantity, amount, unit, normalized_name FROM ingredients WHERE recipe_id = ?",
+            conn, params=(selected_id,)
+        ))
 
 with tab2:
     st.markdown("## 🧪 Review Fuzzy Matches")
