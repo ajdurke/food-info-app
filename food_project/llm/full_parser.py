@@ -11,7 +11,7 @@ from together import Together
 # ✅ Load environment and config
 # -------------------------------
 load_dotenv()
-TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY") or st.secrets["TOGETHER_API_KEY"]
+TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY") or st.secrets["together"]["api_key"]
 
 
 CACHE_PATH = Path("llm_full_parser_cache.json")

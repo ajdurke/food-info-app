@@ -16,6 +16,8 @@ from food_project.ui.review_log_viewer import show_review_log
 
 TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY") or st.secrets["together"]["api_key"]
 
+st.write("🔐 TOGETHER_API_KEY found:", "together" in st.secrets and "api_key" in st.secrets["together"])
+
 try:
     app_id = st.secrets["nutritionix"]["app_id"]
     api_key = st.secrets["nutritionix"]["api_key"]
