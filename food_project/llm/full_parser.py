@@ -1,17 +1,18 @@
 """LLM fallback parser using Together API with prompt templating and usage limits."""
 
-import os
-import json
-import traceback
 import re
 from pathlib import Path
 from dotenv import load_dotenv
+import os
+import streamlit as st
 from together import Together
 
-# ----------------------------
-# Load environment and config
-# ----------------------------
+# -------------------------------
+# ✅ Load environment and config
+# -------------------------------
 load_dotenv()
+TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY") or st.secrets["TOGETHER_API_KEY"]
+
 
 CACHE_PATH = Path("llm_full_parser_cache.json")
 USAGE_LOG = Path("together_llm_usage.json")
