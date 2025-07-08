@@ -3,40 +3,33 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 
-# Confirm where we are and what DB we’re loading
+# Confirm environment context
 st.write("📂 Current Working Directory:", Path.cwd())
 
-# 🔌 Connect to the SQLite database
+# Connect to SQLite database
 db_path = Path("food_info.db")
 st.write("📦 DB Path Used:", db_path.resolve())
 conn = sqlite3.connect(db_path)
 conn.row_factory = sqlite3.Row
 
-# 🔎 DEBUG: Show all recipes in this DB
-st.markdown("### 📋 All recipes in this DB:")
-recipes_debug = pd.read_sql("SELECT id, recipe_title FROM recipes", conn)
-st.dataframe(recipes_debug)
-
-# 🔎 DEBUG: Show all ingredients in this DB
-st.markdown("### 🧾 All ingredients in this DB:")
-ingredients_debug = pd.read_sql("SELECT * FROM ingredients", conn)
-st.dataframe(ingredients_debug)
-
-# 📋 Load recipe titles from the DB
+# Load recipe options
 recipes_df = pd.read_sql_query("SELECT id, recipe_title FROM recipes ORDER BY id DESC", conn)
 recipe_options = recipes_df["recipe_title"].tolist()
 
+# UI: recipe selector
 selected = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_options)
 
-# 🧪 Run the JOIN if a recipe is selected
 if selected and selected != "-- Select --":
     selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
     st.code(f"Selected Recipe ID: {selected_id}")
 
+    # Debug: show ingredients directly
     st.markdown("### 🔍 Raw ingredients for selected recipe:")
-    ingredients_only_df = pd.read_sql_query("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
-    st.dataframe(ingredients_only_df)
+    raw_ingredients = pd.read_sql_query(
+        "SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
+    st.dataframe(raw_ingredients)
 
+    # JOIN query
     query = """
         SELECT
             i.id AS ingredient_id,
