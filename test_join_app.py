@@ -46,9 +46,10 @@ if selected and selected != "-- Select --":
             f.fat
         FROM ingredients i
         LEFT JOIN food_info f
-          ON CAST(i.matched_food_id AS INTEGER) = CAST(f.id AS INTEGER)
+        ON CAST(i.matched_food_id AS INTEGER) = CAST(f.id AS INTEGER)
         WHERE i.recipe_id = ?
     """
+
     try:
         df = pd.read_sql_query(query, conn, params=(selected_id,))
         st.markdown("### ✅ JOIN Result:")
