@@ -1,5 +1,6 @@
 import sqlite3
 import streamlit as st
+import os
 import pandas as pd
 from pathlib import Path
 from food_project.ingestion.parse_recipe_url import parse_recipe
