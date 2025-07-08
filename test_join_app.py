@@ -33,6 +33,10 @@ if selected and selected != "-- Select --":
     selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
     st.code(f"Selected Recipe ID: {selected_id}")
 
+    st.markdown("### 🔍 Raw ingredients for selected recipe:")
+    ingredients_only_df = pd.read_sql_query("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
+    st.dataframe(ingredients_only_df)
+
     query = """
         SELECT
             i.id AS ingredient_id,
