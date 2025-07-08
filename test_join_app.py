@@ -42,6 +42,8 @@ if st.button("Add Recipe"):
                 recipe_data = parse_recipe(url_input)
                 recipe_id = save_recipe_and_ingredients(recipe_data)
                 st.success(f"✅ Added '{recipe_data['title']}' (recipe_id={recipe_id})")
+
+                # Save ID for auto-selection
                 st.session_state["selected_recipe_id"] = recipe_id
                 st.session_state["update_done"] = False
                 st.rerun()
@@ -51,30 +53,34 @@ if st.button("Add Recipe"):
     else:
         st.warning("Please enter a valid recipe URL.")
 
-# Load all recipes
+# Load recipes from DB
 recipes_df = pd.read_sql("SELECT id, recipe_title FROM recipes ORDER BY id", conn)
 recipe_options = recipes_df["recipe_title"].tolist()
 
-# Select recipe (manual or auto-select newly added)
+# Recipe dropdown (manual or auto-select after add)
+selected_id = None
 if "selected_recipe_id" in st.session_state:
-    selected_id = st.session_state.pop("selected_recipe_id")
-    selected_title = recipes_df.loc[recipes_df["id"] == selected_id, "recipe_title"].values[0]
-    selected = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_options,
-                            index=recipe_options.index(selected_title) + 1)
+    try:
+        selected_id = st.session_state.pop("selected_recipe_id")
+        selected_title = recipes_df.loc[recipes_df["id"] == selected_id, "recipe_title"].values[0]
+        selected = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_options,
+                                index=recipe_options.index(selected_title) + 1)
+    except Exception:
+        st.warning("Waiting for new recipe to appear...")
+        st.stop()
 else:
     selected = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_options)
     if selected != "-- Select --":
         selected_id = int(recipes_df.loc[recipes_df["recipe_title"] == selected, "id"].values[0])
 
-if selected and selected != "-- Select --":
+# When a valid recipe is selected
+if selected_id:
     st.code(f"Selected Recipe ID: {selected_id}")
 
-    # Detect recipe change
     if selected_id != st.session_state.get("last_recipe_id"):
         st.session_state.update_done = False
         st.session_state.last_recipe_id = selected_id
 
-    # Run parsing/matching once per selection
     if not st.session_state.update_done:
         with st.spinner("🔄 Parsing and matching ingredients..."):
             update_ingredients(force=True)
@@ -83,12 +89,12 @@ if selected and selected != "-- Select --":
         st.success("✅ Parsing + Matching complete.")
         st.rerun()
 
-    # 🔍 Raw ingredients preview
+    # Show ingredients for this recipe
     st.markdown("### 🔍 Raw ingredients for selected recipe:")
     raw_ingredients = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
     st.dataframe(raw_ingredients)
 
-    # 🔗 JOIN result view
+    # Show JOIN result
     st.markdown("### ✅ JOIN Result:")
     query = """
         SELECT
@@ -122,7 +128,7 @@ if selected and selected != "-- Select --":
     except Exception as e:
         st.error(f"❌ Error running query: {e}")
 
-    # ⚠️ Unmatched ingredients
+    # Unmatched ingredients
     unmatched_df = pd.read_sql_query("""
         SELECT * FROM ingredients
         WHERE recipe_id = ? AND matched_food_id IS NULL
@@ -133,7 +139,7 @@ if selected and selected != "-- Select --":
     else:
         st.warning(f"⚠️ {len(unmatched_df)} unmatched ingredients found.")
 
-    # 📊 Nutrition summary
+    # Nutrition summary
     st.markdown("### 📊 Nutrition Summary")
     if df.empty:
         st.info("No ingredients found for this recipe.")
