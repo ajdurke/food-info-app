@@ -42,7 +42,7 @@ if st.button("Add Recipe"):
 
         except Exception as e:
             st.error(f"❌ Failed to add recipe: {e}")
-            st.code(traceback.format_exc())  # Show full traceback
+            st.code(traceback.format_exc())
     else:
         st.warning("Please enter a valid recipe URL.")
 
@@ -60,11 +60,18 @@ if selected and selected != "-- Select --":
     raw_ingredients = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
     st.dataframe(raw_ingredients)
 
-    # 🔬 Check if recipe 3 has any ingredients
-    test_df = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = 3", conn)
-    st.markdown("### 🔎 TEST: Ingredients for Recipe ID 3")
-    st.dataframe(test_df)
+    # Check unmatched count (but do not show full unmatched table)
+    unmatched_df = pd.read_sql_query("""
+        SELECT COUNT(*) as count FROM ingredients
+        WHERE recipe_id = ? AND matched_food_id IS NULL
+    """, conn, params=(selected_id,))
+    unmatched_count = unmatched_df.iloc[0]["count"]
 
+    st.markdown("### ⚠️ Ingredients Missing Matches")
+    if unmatched_count == 0:
+        st.success("✅ All ingredients are matched.")
+    else:
+        st.warning(f"⚠️ {unmatched_count} unmatched ingredients found.")
 
     # JOIN query using selected recipe_id
     query = """
@@ -87,20 +94,27 @@ if selected and selected != "-- Select --":
 
     try:
         df = pd.read_sql_query(query, conn, params=(selected_id,))
+        df["matched"] = df["matched_food_id"].notna()
+
+        def highlight_unmatched(row):
+            style = "background-color: rgba(255, 100, 100, 0.15);"  # soft red
+            return [style if not row["matched"] else "" for _ in row]
+
         st.markdown("### ✅ JOIN Result:")
         if df.empty:
             st.warning("⚠️ JOIN returned no rows.")
         else:
-            st.dataframe(df)
+            st.dataframe(
+                df.style.apply(highlight_unmatched, axis=1),
+                use_container_width=True
+            )
     except Exception as e:
         st.error(f"❌ Error running query: {e}")
 
-    
+    # Nutrition Summary
     st.markdown("### 📊 Nutrition Summary")
     if df.empty:
         st.info("No ingredients found for this recipe.")
     else:
-        # Ensure numeric fields are cleaned up
         summary = df[["calories", "protein", "carbs", "fat"]].fillna(0).astype(float).sum()
         st.table(summary.rename("Total"))
-
