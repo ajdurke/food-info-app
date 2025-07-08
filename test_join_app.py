@@ -31,6 +31,7 @@ if selected and selected != "-- Select --":
     st.markdown("### 🔎 TEST: Ingredients for Recipe ID 3")
     st.dataframe(test_df)
 
+
     # JOIN query using selected recipe_id
     query = """
         SELECT
