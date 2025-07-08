@@ -21,10 +21,15 @@ if selected and selected != "-- Select --":
     selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
     st.code(f"Selected Recipe ID: {selected_id}")
 
-    # Optional: preview raw ingredients
+    # Preview raw ingredients
     st.markdown("### 🔍 Raw ingredients for selected recipe:")
     raw_ingredients = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
     st.dataframe(raw_ingredients)
+
+    # 🔬 Check if recipe 3 has any ingredients
+    test_df = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = 3", conn)
+    st.markdown("### 🔎 TEST: Ingredients for Recipe ID 3")
+    st.dataframe(test_df)
 
     # JOIN query using selected recipe_id
     query = """
