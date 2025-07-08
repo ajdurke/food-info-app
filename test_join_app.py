@@ -18,6 +18,12 @@ st.write("📦 DB Path Used:", db_path.resolve())
 conn = sqlite3.connect(db_path)
 conn.row_factory = sqlite3.Row
 
+# Track update state
+if "update_done" not in st.session_state:
+    st.session_state.update_done = False
+if "last_recipe_id" not in st.session_state:
+    st.session_state.last_recipe_id = None
+
 # 🔗 Recipe Adder UI
 st.markdown("### 📥 Add New Recipe from URL")
 url_input = st.text_input("Paste a recipe URL:")
@@ -25,63 +31,76 @@ url_input = st.text_input("Paste a recipe URL:")
 if st.button("Add Recipe"):
     if url_input:
         try:
-            # Check if recipe already exists (by source_url)
             existing = conn.execute(
                 "SELECT id FROM recipes WHERE source_url = ?", (url_input,)
             ).fetchone()
 
             if existing:
-                st.warning(f"⚠️ This recipe already exists in the database (recipe_id = {existing['id']}).")
+                st.warning(f"⚠️ This recipe already exists (recipe_id = {existing['id']}).")
+                st.session_state["selected_recipe_id"] = existing["id"]
             else:
                 recipe_data = parse_recipe(url_input)
                 recipe_id = save_recipe_and_ingredients(recipe_data)
                 st.success(f"✅ Added '{recipe_data['title']}' (recipe_id={recipe_id})")
-                update_ingredients(force=True)
-                match_ingredients()
+                st.session_state["selected_recipe_id"] = recipe_id
+                st.session_state["update_done"] = False
                 st.rerun()
-
         except Exception as e:
             st.error(f"❌ Failed to add recipe: {e}")
             st.code(traceback.format_exc())
     else:
         st.warning("Please enter a valid recipe URL.")
 
-# Load recipes for dropdown
+# Load all recipes
 recipes_df = pd.read_sql("SELECT id, recipe_title FROM recipes ORDER BY id", conn)
 recipe_options = recipes_df["recipe_title"].tolist()
-selected = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_options)
+
+# Select recipe (manual or auto-select newly added)
+if "selected_recipe_id" in st.session_state:
+    selected_id = st.session_state.pop("selected_recipe_id")
+    selected_title = recipes_df.loc[recipes_df["id"] == selected_id, "recipe_title"].values[0]
+    selected = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_options,
+                            index=recipe_options.index(selected_title) + 1)
+else:
+    selected = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_options)
+    if selected != "-- Select --":
+        selected_id = int(recipes_df.loc[recipes_df["recipe_title"] == selected, "id"].values[0])
 
 if selected and selected != "-- Select --":
-    selected_id = int(recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0])
     st.code(f"Selected Recipe ID: {selected_id}")
 
-    # Preview raw ingredients
+    # Detect recipe change
+    if selected_id != st.session_state.get("last_recipe_id"):
+        st.session_state.update_done = False
+        st.session_state.last_recipe_id = selected_id
+
+    # Run parsing/matching once per selection
+    if not st.session_state.update_done:
+        with st.spinner("🔄 Parsing and matching ingredients..."):
+            update_ingredients(force=True)
+            match_ingredients()
+        st.session_state.update_done = True
+        st.success("✅ Parsing + Matching complete.")
+        st.rerun()
+
+    # 🔍 Raw ingredients preview
     st.markdown("### 🔍 Raw ingredients for selected recipe:")
     raw_ingredients = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
     st.dataframe(raw_ingredients)
 
-    # Check unmatched count (but do not show full unmatched table)
-    unmatched_df = pd.read_sql_query("""
-        SELECT COUNT(*) as count FROM ingredients
-        WHERE recipe_id = ? AND matched_food_id IS NULL
-    """, conn, params=(selected_id,))
-    unmatched_count = unmatched_df.iloc[0]["count"]
-
-    st.markdown("### ⚠️ Ingredients Missing Matches")
-    if unmatched_count == 0:
-        st.success("✅ All ingredients are matched.")
-    else:
-        st.warning(f"⚠️ {unmatched_count} unmatched ingredients found.")
-
-    # JOIN query using selected recipe_id
+    # 🔗 JOIN result view
+    st.markdown("### ✅ JOIN Result:")
     query = """
         SELECT
             i.id AS ingredient_id,
             i.recipe_id,
             i.food_name,
+            i.amount,
+            i.unit,
+            i.normalized_name,
             i.matched_food_id,
             f.id AS food_info_id,
-            f.normalized_name,
+            f.normalized_name AS matched_name,
             f.calories,
             f.protein,
             f.carbs,
@@ -91,27 +110,30 @@ if selected and selected != "-- Select --":
         ON CAST(i.matched_food_id AS INTEGER) = CAST(f.id AS INTEGER)
         WHERE i.recipe_id = ?
     """
-
     try:
         df = pd.read_sql_query(query, conn, params=(selected_id,))
-        df["matched"] = df["matched_food_id"].notna()
-
-        def highlight_unmatched(row):
-            style = "background-color: rgba(255, 100, 100, 0.15);"  # soft red
-            return [style if not row["matched"] else "" for _ in row]
-
-        st.markdown("### ✅ JOIN Result:")
         if df.empty:
             st.warning("⚠️ JOIN returned no rows.")
         else:
-            st.dataframe(
-                df.style.apply(highlight_unmatched, axis=1),
-                use_container_width=True
-            )
+            def highlight_unmatched(row):
+                return ["background-color: #2a2a2a" if pd.isna(row["matched_name"]) else ""] * len(row)
+            styled_df = df.style.apply(highlight_unmatched, axis=1)
+            st.dataframe(styled_df, use_container_width=True)
     except Exception as e:
         st.error(f"❌ Error running query: {e}")
 
-    # Nutrition Summary
+    # ⚠️ Unmatched ingredients
+    unmatched_df = pd.read_sql_query("""
+        SELECT * FROM ingredients
+        WHERE recipe_id = ? AND matched_food_id IS NULL
+    """, conn, params=(selected_id,))
+    st.markdown("### ⚠️ Ingredients Missing Matches")
+    if unmatched_df.empty:
+        st.success("✅ All ingredients are matched.")
+    else:
+        st.warning(f"⚠️ {len(unmatched_df)} unmatched ingredients found.")
+
+    # 📊 Nutrition summary
     st.markdown("### 📊 Nutrition Summary")
     if df.empty:
         st.info("No ingredients found for this recipe.")
