@@ -60,3 +60,13 @@ if selected and selected != "-- Select --":
             st.dataframe(df)
     except Exception as e:
         st.error(f"❌ Error running query: {e}")
+
+    
+    st.markdown("### 📊 Nutrition Summary")
+    if df.empty:
+        st.info("No ingredients found for this recipe.")
+    else:
+        # Ensure numeric fields are cleaned up
+        summary = df[["calories", "protein", "carbs", "fat"]].fillna(0).astype(float).sum()
+        st.table(summary.rename("Total"))
+
