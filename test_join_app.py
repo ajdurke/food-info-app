@@ -7,7 +7,7 @@ from pathlib import Path
 st.write("📂 Current Working Directory:", Path.cwd())
 
 # 🔌 Connect to the SQLite database
-db_path = Path(__file__).parent / "food_info.db"
+db_path = Path("food_info.db")
 st.write("📦 DB Path Used:", db_path.resolve())
 conn = sqlite3.connect(db_path)
 conn.row_factory = sqlite3.Row
