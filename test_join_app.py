@@ -2,6 +2,10 @@ import sqlite3
 import streamlit as st
 import pandas as pd
 from pathlib import Path
+from food_project.ingestion.parse_recipe_url import parse_recipe
+from food_project.database.sqlite_connector import save_recipe_and_ingredients
+from food_project.processing.ingredient_updater import update_ingredients
+from food_project.ingestion.match_ingredients_to_food_info import match_ingredients
 
 # Confirm environment
 st.write("📂 Current Working Directory:", Path.cwd())
@@ -11,6 +15,24 @@ db_path = Path(__file__).parent / "food_info.db"
 st.write("📦 DB Path Used:", db_path.resolve())
 conn = sqlite3.connect(db_path)
 conn.row_factory = sqlite3.Row
+
+# 🔗 Recipe Adder UI
+st.markdown("### 📥 Add New Recipe from URL")
+url_input = st.text_input("Paste a recipe URL:")
+
+if st.button("Add Recipe"):
+    if url_input:
+        try:
+            recipe_data = parse_recipe(url_input)
+            recipe_id = save_recipe_and_ingredients(recipe_data)
+            st.success(f"✅ Added '{recipe_data['title']}' (recipe_id={recipe_id})")
+            update_ingredients(force=True)
+            match_ingredients()
+            st.rerun()
+        except Exception as e:
+            st.error(f"❌ Failed to add recipe: {e}")
+    else:
+        st.warning("Please enter a valid recipe URL.")
 
 # Load recipes for dropdown
 recipes_df = pd.read_sql("SELECT id, recipe_title FROM recipes ORDER BY id", conn)
