@@ -1,3 +1,9 @@
+# units 
+# data pipeline (recording all the sources and overrides, etc)
+# review module (integrated with the data pipeline)
+# environmental information
+# cost information
 
+### non MVP
 # enable addign multiple recipe links
 # add confirmation for database detetions (i.e. when using --init)
