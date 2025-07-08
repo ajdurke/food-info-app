@@ -25,12 +25,21 @@ url_input = st.text_input("Paste a recipe URL:")
 if st.button("Add Recipe"):
     if url_input:
         try:
-            recipe_data = parse_recipe(url_input)
-            recipe_id = save_recipe_and_ingredients(recipe_data)
-            st.success(f"✅ Added '{recipe_data['title']}' (recipe_id={recipe_id})")
-            update_ingredients(force=True)
-            match_ingredients()
-            st.rerun()
+            # Check if recipe already exists (by source_url)
+            existing = conn.execute(
+                "SELECT id FROM recipes WHERE source_url = ?", (url_input,)
+            ).fetchone()
+
+            if existing:
+                st.warning(f"⚠️ This recipe already exists in the database (recipe_id = {existing['id']}).")
+            else:
+                recipe_data = parse_recipe(url_input)
+                recipe_id = save_recipe_and_ingredients(recipe_data)
+                st.success(f"✅ Added '{recipe_data['title']}' (recipe_id={recipe_id})")
+                update_ingredients(force=True)
+                match_ingredients()
+                st.rerun()
+
         except Exception as e:
             st.error(f"❌ Failed to add recipe: {e}")
             st.code(traceback.format_exc())  # Show full traceback
