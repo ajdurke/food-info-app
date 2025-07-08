@@ -18,7 +18,7 @@ recipe_options = recipes_df["recipe_title"].tolist()
 selected = st.selectbox("Select a recipe:", ["-- Select --"] + recipe_options)
 
 if selected and selected != "-- Select --":
-    selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
+    selected_id = int(recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0])
     st.code(f"Selected Recipe ID: {selected_id}")
 
     # Preview raw ingredients
