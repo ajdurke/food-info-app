@@ -570,5 +570,242 @@
     "normalized_name": "feta cheese",
     "food_score": 0.9,
     "unit_score": null
+  },
+  "2 limes, juiced": {
+    "food": "lime",
+    "amount": 2,
+    "unit": "count",
+    "normalized_name": "lime",
+    "food_score": 0.95,
+    "unit_score": 1.0,
+    "preparation": "juiced"
+  },
+  "2 teaspoons ground cumin": {
+    "food": "cumin",
+    "amount": 2,
+    "unit": "teaspoon",
+    "normalized_name": "cumin",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "0.5 teaspoon red pepper flakes, or more to taste": {
+    "food": "red pepper flakes",
+    "amount": 0.5,
+    "unit": "teaspoon",
+    "normalized_name": "red pepper flake",
+    "food_score": 0.92,
+    "unit_score": 1.0
+  },
+  "1 (15 ounce) can black beans, drained and rinsed": {
+    "food": "black beans",
+    "amount": 15,
+    "unit": "ounce",
+    "normalized_name": "black beans",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "5 green onions, finely chopped": {
+    "food": "green onion",
+    "amount": 5,
+    "unit": "count",
+    "normalized_name": "green onion",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "0.25 cup chopped fresh cilantro": {
+    "food": "cilantro",
+    "amount": 0.25,
+    "unit": "cup",
+    "normalized_name": "cilantro",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "salt and ground black pepper to taste": {
+    "food": "salt",
+    "amount": null,
+    "unit": null,
+    "normalized_name": "salt",
+    "food_score": 0.95,
+    "unit_score": null
+  },
+  "2 heads fresh broccoli, chopped": {
+    "food": "broccoli",
+    "amount": 2,
+    "unit": "heads",
+    "normalized_name": "broccoli",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "1.5 cups sharp Cheddar cheese, shredded": {
+    "food": "Cheddar cheese",
+    "amount": 1.5,
+    "unit": "cups",
+    "normalized_name": "cheddar cheese",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "0.5 large red onion, chopped": {
+    "food": "onion",
+    "amount": 0.5,
+    "unit": "count",
+    "normalized_name": "red onion",
+    "food_score": 0.9,
+    "unit_score": 0.8,
+    "descriptor": "large",
+    "preparation": "chopped"
+  },
+  "0.66666668653488 cup mayonnaise": {
+    "food": "mayonnaise",
+    "amount": 0.66666668653488,
+    "unit": "cup",
+    "normalized_name": "mayonnaise",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "0.25 cup red wine vinegar": {
+    "food": "red wine vinegar",
+    "amount": 0.25,
+    "unit": "cup",
+    "normalized_name": "red wine vinegar",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "0.125 cup white sugar": {
+    "food": "sugar",
+    "amount": 0.125,
+    "unit": "cup",
+    "normalized_name": "sugar",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "2 zucchini": {
+    "food": "zucchini",
+    "amount": 2,
+    "unit": "count",
+    "normalized_name": "zucchini",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "0.25 English cucumber, chopped": {
+    "food": "English cucumber",
+    "amount": 0.25,
+    "unit": "count",
+    "normalized_name": "cucumber",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "10 cherry tomatoes, halved, or more to taste": {
+    "food": "cherry tomato",
+    "amount": 10,
+    "unit": "count",
+    "normalized_name": "cherry tomato",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "10 pitted kalamata olives, halved, or more to taste": {
+    "food": "kalamata olives",
+    "amount": 10,
+    "unit": "count",
+    "normalized_name": "olive",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "0.25 cup thinly sliced red onion": {
+    "food": "red onion",
+    "amount": 0.25,
+    "unit": "cup",
+    "normalized_name": "onion",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "2 ounces crumbled reduced-fat feta cheese": {
+    "food": "feta cheese",
+    "amount": 2,
+    "unit": "ounces",
+    "normalized_name": "feta cheese",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "2 skinless, boneless chicken breast halves": {
+    "food": "chicken breast",
+    "amount": 2,
+    "unit": "count",
+    "normalized_name": "chicken breast",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "4 zucchini, cut into 1 1/2-inch sticks": {
+    "food": "zucchini",
+    "amount": 4,
+    "unit": "count",
+    "normalized_name": "zucchini",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "1 (15 ounce) can garbanzo beans, drained and rinsed": {
+    "food": "garbanzo beans",
+    "amount": 15,
+    "unit": "ounce",
+    "normalized_name": "chickpeas",
+    "food_score": 0.92,
+    "unit_score": 1.0
+  },
+  "1 (6 ounce) can black olives, drained and sliced": {
+    "food": "black olives",
+    "amount": 6,
+    "unit": "ounce",
+    "normalized_name": "black olive",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "2 tablespoons sesame seeds": {
+    "food": "sesame seeds",
+    "amount": 2,
+    "unit": "tablespoon",
+    "normalized_name": "sesame seed",
+    "food_score": 0.9,
+    "unit_score": 1.0
+  },
+  "4 cups shredded cabbage": {
+    "food": "cabbage",
+    "amount": 4,
+    "unit": "cup",
+    "normalized_name": "cabbage",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "2 carrots, shredded": {
+    "food": "carrot",
+    "amount": 2,
+    "unit": "count",
+    "normalized_name": "carrot",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "1 (3 ounce) package ramen noodles, crushed": {
+    "food": "ramen noodles",
+    "amount": 1,
+    "unit": "package",
+    "normalized_name": "ramen noodles",
+    "food_score": 0.9,
+    "unit_score": 0.8,
+    "sub_amount": 3,
+    "sub_unit": "ounce"
+  },
+  "2 tablespoons white sugar": {
+    "food": "sugar",
+    "amount": 2,
+    "unit": "tablespoon",
+    "normalized_name": "sugar",
+    "food_score": 0.95,
+    "unit_score": 1.0
+  },
+  "1 (14 ounce) can artichoke hearts, drained and chopped": {
+    "food": "artichoke hearts",
+    "amount": 1,
+    "unit": "can",
+    "normalized_name": "artichoke hearts",
+    "food_score": 0.9,
+    "unit_score": 1.0
   }
 }

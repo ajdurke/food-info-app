@@ -13,7 +13,7 @@ from food_project.llm.estimate_nutrition import estimate_nutrition_from_llm
 from food_project.database.nutritionix_service import get_nutrition_data
 from food_project.database.sqlite_connector import init_db
 
-def update_ingredients(force=False, db_path="food_info.db", init=False, mock=False):
+def update_ingredients(force=False, db_path="food_info.db", init=False, mock=False, mode="auto"):
     """Update ingredients table with parsed amounts, units, match scores, LLM fallback, and nutrition."""
     abs_path = Path(db_path).resolve()
     st.write(f"📂 Opening DB at: {abs_path}")
@@ -56,6 +56,7 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
     total = cur.fetchone()[0]
     st.write(f"📊 Total ingredients in DB: {total}")
 
+    # Ensure necessary columns exist
     for column_def in [
         "ALTER TABLE ingredients ADD COLUMN amount REAL",
         "ALTER TABLE ingredients ADD COLUMN unit TEXT",
@@ -76,10 +77,17 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
     known_foods = [row["normalized_name"] for row in food_info_rows]
     food_name_to_id = {row["normalized_name"]: row["id"] for row in food_info_rows}
 
-    if not force:
+    # Flexible logic based on `mode`
+    if mode == "auto":
         query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NULL"
-    else:
+    elif mode == "match":
         query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NOT NULL AND matched_food_id IS NULL"
+    elif mode == "full":
+        query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NULL OR matched_food_id IS NULL"
+    else:
+        print(f"❌ Unknown mode '{mode}'. Use 'auto', 'match', or 'full'.")
+        conn.close()
+        return
 
     rows = cur.execute(query).fetchall()
     print(f"🔍 Ingredients to update: {len(rows)}")
@@ -113,27 +121,36 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
             result = get_nutrition_data(normalized_name, conn, use_mock=mock, skip_if_exists=True)
             used_nutritionix = 1 if result else 0
 
-            if not result:
+            # Check again if inserted from nutritionix
+            cur.execute("SELECT id FROM food_info WHERE normalized_name = ?", (normalized_name,))
+            row = cur.fetchone()
+            matched_food_id = row["id"] if row else None
+
+            # Still not found? Try LLM estimate
+            if not matched_food_id:
                 used_llm_estimate = 1
                 print(f"⚠️ API failed. Estimating nutrition via LLM for: {normalized_name}")
                 est = estimate_nutrition_from_llm(normalized_name, mock=mock)
                 if est:
-                    cur.execute("""
-                        INSERT INTO food_info (
-                            raw_name, normalized_name, serving_qty, serving_unit,
-                            serving_weight_grams, calories, fat, saturated_fat, cholesterol,
-                            sodium, carbs, fiber, sugars, protein, potassium,
-                            match_type, approved
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, (
-                        normalized_name, normalized_name,
-                        100, "g", 100,
-                        est.get("calories"), est.get("fat"), est.get("saturated_fat"), est.get("cholesterol"),
-                        est.get("sodium"), est.get("carbs"), est.get("fiber"), est.get("sugars"),
-                        est.get("protein"), est.get("potassium"),
-                        "llm_estimate", 0
-                    ))
-                    conn.commit()
+                    try:
+                        cur.execute("""
+                            INSERT INTO food_info (
+                                raw_name, normalized_name, serving_qty, serving_unit,
+                                serving_weight_grams, calories, fat, saturated_fat, cholesterol,
+                                sodium, carbs, fiber, sugars, protein, potassium,
+                                match_type, approved
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            normalized_name, normalized_name,
+                            100, "g", 100,
+                            est.get("calories"), est.get("fat"), est.get("saturated_fat"), est.get("cholesterol"),
+                            est.get("sodium"), est.get("carbs"), est.get("fiber"), est.get("sugars"),
+                            est.get("protein"), est.get("potassium"),
+                            "llm_estimate", 0
+                        ))
+                        conn.commit()
+                    except sqlite3.IntegrityError:
+                        print(f"⏩ Skipped duplicate: {normalized_name}")
 
             cur.execute("SELECT id FROM food_info WHERE normalized_name = ?", (normalized_name,))
             row = cur.fetchone()
@@ -179,24 +196,4 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
             print(" -", tuple(row))
 
     conn.close()
-    print(f"✅ Updated {updated} ingredient(s). {'(forced)' if force else '(new only)'}")
-
-def main():
-    parser = argparse.ArgumentParser(description="Update parsed ingredient data")
-    parser.add_argument("--init", action="store_true", help="Recreate food_info table before running (destructive)")
-    parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")
-    parser.add_argument("--force", action="store_true", help="Force reprocessing of all ingredients")
-    parser.add_argument("--mock", action="store_true", help="Use mock LLM and API responses")
-    args = parser.parse_args()
-
-    update_ingredients(
-        force=args.force,
-        db_path=args.db,
-        init=args.init,
-        mock=args.mock
-    )
-
-# Only run main() if executed as script
-if __name__ == "__main__":
-    main()
-
+    print(f"✅ Updated {updated} ingredient(s). (mode='{mode}')")
