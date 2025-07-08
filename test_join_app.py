@@ -114,7 +114,7 @@ if selected_id:
     if not st.session_state.update_done:
         st.write("⚙️ Starting update_ingredients and match_ingredients...")
         with st.spinner("🔄 Parsing and matching ingredients..."):
-            update_ingredients(force=True)
+            update_ingredients(mode="full")
             match_ingredients()
         st.session_state.update_done = True
         st.success("✅ Parsing + Matching complete.")
