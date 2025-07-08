@@ -2,6 +2,7 @@
 import streamlit as st
 st.write("✅ ingredient_updater.py loaded")
 import sqlite3
+import os
 import argparse
 from pathlib import Path
 from food_project.processing.normalization import parse_ingredient
