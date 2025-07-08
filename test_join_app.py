@@ -1,6 +1,7 @@
 import sqlite3
 import streamlit as st
 import os
+import traceback
 import pandas as pd
 from pathlib import Path
 from food_project.ingestion.parse_recipe_url import parse_recipe
@@ -32,6 +33,7 @@ if st.button("Add Recipe"):
             st.rerun()
         except Exception as e:
             st.error(f"❌ Failed to add recipe: {e}")
+            st.code(traceback.format_exc())  # Show full traceback
     else:
         st.warning("Please enter a valid recipe URL.")
 
