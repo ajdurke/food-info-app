@@ -1,88 +1,216 @@
-"""Parse raw ingredient text and store structured info."""
-
+"""Parse raw ingredient text and store structured info, with LLM fallback and nutrition enrichment."""
+import streamlit as st
+st.write("✅ ingredient_updater.py loaded")
 import sqlite3
+import os
 import argparse
 from pathlib import Path
 from food_project.processing.normalization import parse_ingredient
+from food_project.processing.validator import score_food_match, score_unit
+from food_project.processing.units import COMMON_UNITS
+from food_project.llm.full_parser import parse_with_llm
+from food_project.llm.estimate_nutrition import estimate_nutrition_from_llm
+from food_project.database.nutritionix_service import get_nutrition_data
 from food_project.database.sqlite_connector import init_db
 
-def update_ingredients(force=False, db_path="food_info.db", init=False):
-    """Update ingredients table with parsed amounts and units."""
+print("🚨 ingredient_updater.py is running from:", __file__)
+
+def update_ingredients(force=False, db_path="food_info.db", init=False, mock=False, mode="auto"):
+    """Update ingredients table with parsed amounts, units, match scores, LLM fallback, and nutrition."""
+    abs_path = Path(db_path).resolve()
+    st.write(f"📂 Opening DB at: {abs_path}")
     conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    st.write("🛠 Connected to:", os.path.abspath(db_path))
+    st.write("📍 DB path in updater:", conn.execute("PRAGMA database_list").fetchone()[2])
 
     if init:
         print("⚙️ init_db() is recreating the food_info table")
         init_db(conn)
 
-    cur = conn.cursor()
+    # Ensure review log table exists
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS ingredient_review_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ingredient_id INTEGER,
+        raw_text TEXT,
+        normalized_name TEXT,
+        amount REAL,
+        unit TEXT,
+        food_score REAL,
+        unit_score REAL,
+        used_llm INTEGER,
+        used_llm_estimate INTEGER,
+        used_nutritionix INTEGER,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        approved TEXT DEFAULT 'pending'
+    )
+    """)
 
-    # Check if ingredients table exists
     try:
         cur.execute("SELECT COUNT(*) FROM ingredients")
-    except sqlite3.OperationalError as e:
+    except sqlite3.OperationalError:
         print("❌ Error: ingredients table missing. Did you initialize the DB?")
         conn.close()
         return
+    print("🚩 Ingredients table exists, continuing...")
 
     total = cur.fetchone()[0]
-    print(f"📊 Total ingredients in DB: {total}")
+    st.write(f"📊 Total ingredients in DB: {total}")
 
-    # Add required columns if not already present
+    # Ensure necessary columns exist
     for column_def in [
         "ALTER TABLE ingredients ADD COLUMN amount REAL",
         "ALTER TABLE ingredients ADD COLUMN unit TEXT",
         "ALTER TABLE ingredients ADD COLUMN normalized_name TEXT",
         "ALTER TABLE ingredients ADD COLUMN estimated_grams REAL",
-        "ALTER TABLE ingredients ADD COLUMN fuzz_score REAL"
+        "ALTER TABLE ingredients ADD COLUMN fuzz_score REAL",
+        "ALTER TABLE ingredients ADD COLUMN food_score REAL",
+        "ALTER TABLE ingredients ADD COLUMN unit_score REAL",
+        "ALTER TABLE ingredients ADD COLUMN matched_food_id INTEGER"
     ]:
         try:
             cur.execute(column_def)
         except sqlite3.OperationalError:
-            pass  # Column already exists
+            pass
 
-    query = "SELECT id, food_name FROM ingredients"
-    if not force:
-        # Only reprocess rows that haven't been parsed yet unless --force is used
-        query += " WHERE normalized_name IS NULL"
+    cur.execute("SELECT id, normalized_name FROM food_info")
+    food_info_rows = cur.fetchall()
+    known_foods = [row["normalized_name"] for row in food_info_rows]
+    food_name_to_id = {row["normalized_name"]: row["id"] for row in food_info_rows}
 
+    # Flexible logic based on `mode`
+    if mode == "auto":
+        query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NULL"
+    elif mode == "match":
+        query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NOT NULL AND matched_food_id IS NULL"
+    elif mode == "full":
+        query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NULL OR matched_food_id IS NULL"
+    elif mode == "all":
+        query = "SELECT id, food_name FROM ingredients"
+    else:
+        print(f"❌ Unknown mode '{mode}'. Use 'auto', 'match', 'full', or 'all'.")
+        conn.close()
+        return
+    print(f"DEBUG: About to set query for mode={mode}")
+    print(f"DEBUG: Query set to: {query}")
     rows = cur.execute(query).fetchall()
     print(f"🔍 Ingredients to update: {len(rows)}")
+    if len(rows) > 0:
+        print('Sample rows to update:', rows[:3])
 
     updated = 0
     for ing_id, raw_text in rows:
-        # ``parse_ingredient`` handles all the text cleaning and unit conversion
+        used_llm = 0
+        used_llm_estimate = 0
+        used_nutritionix = 0
+
         amount, unit, normalized_name, est_grams = parse_ingredient(raw_text)
+        food_score = score_food_match(normalized_name, known_foods)
+        unit_score = score_unit(unit, set(COMMON_UNITS))
+
+        if (food_score < 80 or unit_score < 80) and raw_text:
+            used_llm = 1
+            print(f"🤖 Using LLM for ingredient {ing_id}: '{raw_text}' (scores: food={food_score}, unit={unit_score})")
+            llm_result = parse_with_llm(raw_text, mock=mock)
+            if llm_result.get("food"):
+                amount = llm_result.get("amount")
+                unit = llm_result.get("unit")
+                normalized_name = llm_result.get("normalized_name")
+                est_grams = None
+                food_score = llm_result.get("food_score", 60.0)
+                unit_score = llm_result.get("unit_score", 60.0)
+
+        matched_food_id = food_name_to_id.get(normalized_name)
+        result = None
+        if not matched_food_id and normalized_name:
+            print(f"🥣 Fetching nutrition info for: {normalized_name}")
+            result = get_nutrition_data(normalized_name, conn, use_mock=mock, skip_if_exists=True)
+            used_nutritionix = 1 if result else 0
+
+            # Check again if inserted from nutritionix
+            cur.execute("SELECT id FROM food_info WHERE normalized_name = ?", (normalized_name,))
+            row = cur.fetchone()
+            matched_food_id = row["id"] if row else None
+
+            # Still not found? Try LLM estimate
+            if not matched_food_id:
+                used_llm_estimate = 1
+                print(f"⚠️ API failed. Estimating nutrition via LLM for: {normalized_name}")
+                est = estimate_nutrition_from_llm(normalized_name, mock=mock)
+                if est:
+                    try:
+                        cur.execute("""
+                            INSERT INTO food_info (
+                                raw_name, normalized_name, serving_qty, serving_unit,
+                                serving_weight_grams, calories, fat, saturated_fat, cholesterol,
+                                sodium, carbs, fiber, sugars, protein, potassium,
+                                match_type, approved
+                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            normalized_name, normalized_name,
+                            100, "g", 100,
+                            est.get("calories"), est.get("fat"), est.get("saturated_fat"), est.get("cholesterol"),
+                            est.get("sodium"), est.get("carbs"), est.get("fiber"), est.get("sugars"),
+                            est.get("protein"), est.get("potassium"),
+                            "llm_estimate", 0
+                        ))
+                        conn.commit()
+                    except sqlite3.IntegrityError:
+                        print(f"⏩ Skipped duplicate: {normalized_name}")
+
+            cur.execute("SELECT id FROM food_info WHERE normalized_name = ?", (normalized_name,))
+            row = cur.fetchone()
+            matched_food_id = row["id"] if row else None
+
         cur.execute("""
             UPDATE ingredients
-            SET amount = ?, unit = ?, normalized_name = ?, estimated_grams = ?
+            SET amount = ?, unit = ?, normalized_name = ?, estimated_grams = ?,
+                food_score = ?, unit_score = ?, matched_food_id = ?
             WHERE id = ?
-        """, (amount, unit, normalized_name, est_grams, ing_id))
+        """, (
+            amount, unit, normalized_name, est_grams,
+            food_score, unit_score, matched_food_id,
+            ing_id
+        ))
         updated += 1
+
+        # Log this update
+        cur.execute("""
+            INSERT INTO ingredient_review_log (
+                ingredient_id, raw_text, normalized_name, amount, unit,
+                food_score, unit_score,
+                used_llm, used_llm_estimate, used_nutritionix
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            ing_id, raw_text, normalized_name, amount, unit,
+            food_score, unit_score,
+            used_llm, used_llm_estimate, used_nutritionix
+        ))
 
     conn.commit()
 
     if updated:
         cur.execute("""
-            SELECT food_name, normalized_name, amount, unit
+            SELECT food_name, normalized_name, amount, unit, food_score, unit_score
             FROM ingredients
             ORDER BY id DESC
             LIMIT 3
         """)
         print("🧾 Example updates:")
         for row in cur.fetchall():
-            print(" -", row)
+            print(" -", tuple(row))
 
     conn.close()
-    print(f"✅ Updated {updated} ingredient(s). {'(forced)' if force else '(new only)'}")
-
-def main():
-    # Command line wrapper for the ``update_ingredients`` function
-    parser = argparse.ArgumentParser(description="Update parsed ingredient data")
-    parser.add_argument("--init", action="store_true", help="Recreate food_info table before running (destructive)")
-    parser.add_argument("--db", default="food_info.db", help="Path to SQLite database")
-    parser.add_argument("--force", action="store_true", help="Force reprocessing of all ingredients")
-    args = parser.parse_args()
-    update_ingredients(force=args.force, db_path=args.db, init=args.init)
+    print(f"✅ Updated {updated} ingredient(s). (mode='{mode}')")
 
 if __name__ == "__main__":
-    main()
+    # call update_ingredients(...)
+    print("🚩 Running update_ingredients from __main__")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", default="auto", help="Mode for updating ingredients")
+    args = parser.parse_args()
+    update_ingredients(mode=args.mode)

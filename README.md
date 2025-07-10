@@ -89,3 +89,104 @@ The script expects the same Google credentials currently used by the app (via `s
 # python -m food_project.processing.ingredient_updater
 # python -m food_project.ingestion.match_ingredients_to_food_info
 # python -m food_project.ingestion.review_matches 
+
+
+## 📚 Function Reference
+
+### 📁 `./`
+#### └── 📄 `app.py`
+- **`display_food_info`** – Displays a table of recipes and how they use a given ingredient.
+- **`load_food_details`** – Retrieves recipes and ingredient info for a selected food name.
+- **`load_food_list`** – Fetches all unique normalized ingredient names from the ingredients table, used for dropdowns.
+
+### 📁 `food_project/archive/`
+#### └── 📄 `google_sheets_connector.py`
+- **`get_food_data`** – Reads a row of food data from Google Sheets given a name.
+- **`get_sheet`** – Opens the first worksheet of a Google Sheet using Streamlit credentials.
+
+#### └── 📄 `import_csv_to_sqlite.py`
+- **`import_recipes`** – Inserts recipe and ingredient data from CSV into the local SQLite database.
+- **`init_db`** – Creates the recipes and ingredients tables if they do not exist.
+- **`main`** – Handles command-line execution for running a script.
+
+#### └── 📄 `import_food_info.py`
+- **`import_food_data`** – Loads nutrition data from CSV and inserts into food_info table.
+- **`init_food_table`** – Drops and recreates the food_info table with standard schema.
+- **`parse_float`** – Safely converts a string to a float; returns None if not valid.
+
+#### └── 📄 `migrate_to_sqlite.py`
+- **`get_gsheet_client`** – Internal helper used to support data parsing, matching, or UI rendering.
+- **`migrate`** – Internal helper used to support data parsing, matching, or UI rendering.
+
+### 📁 `food_project/database/`
+#### └── 📄 `nutritionix_service.py`
+- **`_fetch_from_api`** – Sends a query to the Nutritionix API and returns raw JSON results.
+- **`get_nutrition_data`** – Fetches nutrition data for a food, using cache if available, API otherwise.
+
+#### └── 📄 `sqlite_connector.py`
+- **`get_connection`** – Creates and returns a SQLite database connection with dictionary row access.
+- **`init_db`** – Creates the recipes and ingredients tables if they do not exist.
+- **`save_recipe_and_ingredients`** – Saves a recipe and its list of ingredients into the database.
+
+### 📁 `food_project/dev/`
+#### └── 📄 `create_fake_food_info.py`
+- **`seed_fake_food_info`** – Internal helper used to support data parsing, matching, or UI rendering.
+
+#### └── 📄 `fetch_nutritionix.py`
+- **`main`** – Handles command-line execution for running a script.
+
+### 📁 `food_project/ingestion/`
+#### └── 📄 `match_ingredients_to_food_info.py`
+- **`main`** – Handles command-line execution for running a script.
+- **`match_ingredients`** – Assigns the best matching food_info entry for each parsed ingredient.
+
+#### └── 📄 `parse_recipe_url.py`
+- **`main`** – Handles command-line execution for running a script.
+- **`parse_recipe`** – Extracts ingredients and title from a recipe webpage.
+
+#### └── 📄 `populate_food_info.py`
+- **`clear_existing_data`** – Deletes all rows from the food_info table.
+- **`fetch_and_insert`** – Fetches nutrition info for a food and inserts into the database.
+- **`main`** – Handles command-line execution for running a script.
+- **`read_food_list`** – Reads a list of food names from a text file.
+
+#### └── 📄 `review_food_info.py`
+- **`main`** – Handles command-line execution for running a script.
+- **`review_food_info`** – CLI for inspecting entries in food_info and manually approving them.
+
+#### └── 📄 `review_matches.py`
+- **`main`** – Handles command-line execution for running a script.
+- **`review_matches`** – CLI for reviewing fuzzy matches and selecting corrections.
+
+### 📁 `food_project/processing/`
+#### └── 📄 `ingredient_updater.py`
+- **`main`** – Handles command-line execution for running a script.
+- **`update_ingredients`** – Parses raw ingredients into structured fields like amount and unit.
+
+#### └── 📄 `matcher.py`
+- **`fetch_db_food_matches`** – Gets fuzzy matches for a normalized name against entries in food_info.
+- **`fetch_food_matches`** – Returns top fuzzy string matches for a given food name.
+
+#### └── 📄 `normalization.py`
+- **`is_countable_item`** – Internal helper used to support data parsing, matching, or UI rendering.
+- **`normalize_food_name`** – Cleans and standardizes food names for matching.
+- **`parse_ingredient`** – Breaks down an ingredient string into quantity, unit, and name.
+
+#### └── 📄 `units.py`
+- **`extract_unit_size`** – Parses text like '(16 oz)' to extract quantity and unit.
+
+### 📁 `food_project/ui/`
+#### └── 📄 `recipe_viewer.py`
+- **`convert_to_grams`** – Converts ingredient quantity and unit into an estimated gram value.
+- **`load_food_data`** – Loads full contents of the food_info table into a DataFrame.
+- **`load_recipe_df`** – Loads all recipe and ingredient data into a DataFrame.
+- **`match_ingredient`** – Performs fuzzy matching of a food name against known food_info items.
+- **`normalize_ingredient`** – Simplifies food name (e.g., 'organic 2% milk' → 'milk').
+- **`normalize_unit`** – Maps unit aliases (like tbsp, tablespoon) to standardized unit names.
+- **`show_recipe_viewer`** – Displays parsed recipes and totals in the Streamlit UI.
+
+#### └── 📄 `review_matches_app.py`
+- **`get_fuzzy_matches`** – Gets fuzzy-matched ingredients needing review for approval UI.
+- **`load_food_options`** – Loads all available food_info options into a lookup dict.
+- **`reject_match`** – Removes an incorrect food match from an ingredient.
+- **`update_match`** – Sets a new food_info match for an ingredient.

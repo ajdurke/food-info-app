@@ -1,3 +1,5 @@
+print("🔗 match_ingredients_to_food_info.py loaded")
+
 """Link parsed ingredients to entries in the ``food_info`` table."""
 
 import sqlite3

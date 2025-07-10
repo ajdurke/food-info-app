@@ -1,136 +1,250 @@
-# This is the main entry point for the Streamlit web app.
-# The goal of the app is to display recipe and ingredient
-# information stored in a local SQLite database.  The code
-# relies on several helper modules within the ``food_project``
-# package.  These modules handle things like normalizing
-# ingredient text, matching ingredients to nutrition data,
-# and presenting recipe information in the browser.
-
-import streamlit as st
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import sqlite3
-from food_project.ui import recipe_viewer
+import streamlit as st
+st.write("📦 app.py loaded")
+import pandas as pd
+from food_project.database.sqlite_connector import get_connection
+from food_project.database.nutritionix_service import get_nutrition_data
+from food_project.database.sqlite_connector import save_recipe_and_ingredients
+from food_project.ingestion.parse_recipe_url import parse_recipe
+from food_project.ui.review_log_viewer import show_review_log
+from food_project.ui.review_matches_app import get_fuzzy_matches
 from food_project.processing.ingredient_updater import update_ingredients
 from food_project.ingestion.match_ingredients_to_food_info import match_ingredients
 
+# Title banner for environment
+branch = st.secrets.get("general", {}).get("STREAMLIT_BRANCH", "main")
+st.title("📊 Food Info Tracker" + (" — Staging" if branch == "staging" else ""))
 
-try:
-    app_id = st.secrets["nutritionix"]["app_id"]
-    api_key = st.secrets["nutritionix"]["api_key"]
-    # The ``secrets.toml`` file (not included in version control)
-    # holds the Nutritionix API credentials.  Loading them at
-    # runtime lets us fetch nutrition data without exposing the
-    # keys in the codebase.
-    st.success(f"Loaded Nutritionix credentials from `secrets.toml`")
-except Exception as e:
-    # When running outside Streamlit Cloud or without the secrets
-    # file, we can't fetch credentials.  Show an error instead of
-    # crashing so the rest of the app can still run for demo
-    # purposes.
-    st.error(f"Failed to load Nutritionix credentials: {e}")
+# Set up tabs
+tab1, tab2 = st.tabs(["🍽 Recipes & Nutrition", "🧪 Review Matches"])
 
-# -------------------------------
-# Load distinct food names
-# -------------------------------
-# ``st.cache_data`` tells Streamlit to cache the returned
-# list so the database isn't queried on every page load.
-@st.cache_data
-def load_food_list():
-    conn = sqlite3.connect("food_info.db")       # open the database file
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT name FROM ingredients ORDER BY name")
-    rows = cursor.fetchall()
-    conn.close()
-    # Each row returned is a tuple like ('carrot',)
-    # so we pull out just the name from index 0
-    return [row[0] for row in rows]
+with tab1:
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+    st.write("📍 DB path in app:", conn.execute("PRAGMA database_list").fetchone()[2])
+    st.markdown(f"📍 DB path in app: `{os.path.abspath('food_info.db')}`")
 
-# -------------------------------
-# Load food detail rows
-# -------------------------------
-# Again we cache the results so repeatedly viewing the same
-# food won't keep hitting the database.
-@st.cache_data
-def load_food_details(food_name):
-    conn = sqlite3.connect("food_info.db")
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT r.title, r.version, r.source_url, i.name, i.amount, i.unit
-        FROM recipes r
-        JOIN ingredients i ON r.id = i.recipe_id
-        WHERE i.name = ?
-    """, (food_name,))
-    rows = cursor.fetchall()
-    conn.close()
-    # ``rows`` is a list of tuples containing recipe title,
-    # version, URL, ingredient name, amount and unit.  We just
-    # return that raw data so the caller can format it.
-    return rows
+    st.subheader("🧬 Schema Debug")
 
-# -------------------------------
-# Branch-based header
-# -------------------------------
-# Some deployments set a ``STREAMLIT_BRANCH`` secret so we
-# can display whether this app is running on staging or
-# production.  If the secret isn't set we fall back to
-# "unknown".
-branch = st.secrets.get("general", {}).get("STREAMLIT_BRANCH", "unknown")
+    def format_table_schema(cursor, table_name):
+        return pd.DataFrame(
+            cursor.execute(f"PRAGMA table_info({table_name})").fetchall(),
+            columns=["cid", "name", "type", "notnull", "dflt_value", "pk"]
+        )
+    
+    st.markdown("### 🧪 Column Type Check for matched_food_id and food_info.id")
+    schema_check = conn.execute("PRAGMA table_info(ingredients)").fetchall()
+    for col in schema_check:
+        if col[1] in ("matched_food_id",):
+            st.write(f"{col[1]} → {col[2]}")  # col[2] = declared SQLite type
 
-if branch == "staging":
-    st.title("Food Info Tracker - Staging Branch")
-else:
-    st.title("Food Info Tracker")
 
-col1, col2 = st.columns(2)
-with col1:
-    # Button to re-run the ingredient parsing step. This updates
-    # the ``ingredients`` table with structured amounts and units.
-    if st.button("🔄 Re-parse Ingredients"):
-        with st.spinner("Re-parsing ingredients..."):
+    st.markdown("#### 🧾 Ingredients table schema")
+    st.dataframe(format_table_schema(conn, "ingredients"))
+
+    st.markdown("#### 🧾 Food_info table schema")
+    st.dataframe(format_table_schema(conn, "food_info"))
+
+
+    st.write("📊 ALL recipe_ids in ingredients table:")
+    recipe_ids_in_ingredients = pd.read_sql("SELECT DISTINCT recipe_id FROM ingredients", conn)
+    st.dataframe(recipe_ids_in_ingredients)
+
+
+    # @st.cache_data(ttl=600)
+    def load_recipes():
+        return pd.read_sql_query("SELECT id, recipe_title FROM recipes ORDER BY id DESC", conn)
+
+    recipes_df = load_recipes()
+    recipe_options = recipes_df["recipe_title"].tolist()
+    selected = st.selectbox("Select an existing recipe:", ["-- Select --"] + recipe_options)
+
+    # Add new recipe
+    st.markdown("### 📥 Add New Recipe")
+    url_input = st.text_input("Paste recipe URL:")
+    if st.button("Add Recipe from URL"):
+        if url_input:
+            try:
+                recipe_data = parse_recipe(url_input)
+                recipe_id = save_recipe_and_ingredients(recipe_data)
+                st.success(f"✅ Added '{recipe_data['title']}' to the database.")
+                st.write("🚀 Calling update_ingredients")
+                update_ingredients(force=True)
+                match_ingredients()
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed to parse or insert recipe: {e}")
+        else:
+            st.warning("Please enter a valid recipe URL.")
+
+    if selected and selected != "-- Select --":
+        selected_id = recipes_df[recipes_df["recipe_title"] == selected]["id"].values[0]
+        st.code(f"DEBUG SQL PARAMS — selected_id: {selected_id}")
+
+        st.markdown("### 🧪 Ingredients with recipe_id = 3 (raw check)")
+        check_df = pd.read_sql("SELECT id, recipe_id, food_name, matched_food_id FROM ingredients WHERE recipe_id = 3", conn)
+        st.dataframe(check_df)
+
+        # 🔬 Raw SQL join output to validate matched_food_id join
+        debug_df = pd.read_sql_query("""
+            SELECT i.id AS ingredient_id,
+                i.recipe_id,
+                i.food_name,
+                i.matched_food_id,
+                f.id AS food_info_id,
+                f.normalized_name,
+                f.calories,
+                f.protein,
+                f.carbs,
+                f.fat
+            FROM ingredients i
+            LEFT JOIN food_info f ON i.matched_food_id = f.id
+            WHERE i.recipe_id = ?
+        """, conn, params=(selected_id,))
+
+        st.markdown("### 🧪 Manual SQL Join Debug Output")
+        if debug_df.empty:
+            st.warning("⚠️ SQL join returned no rows.")
+        else:
+            st.dataframe(debug_df)
+
+
+        # Check if this recipe has unprocessed ingredients
+        raw_ingredient_count = pd.read_sql_query("""
+            SELECT COUNT(*) as count FROM ingredients
+            WHERE recipe_id = ? AND (normalized_name IS NULL OR amount IS NULL)
+        """, conn, params=(selected_id,)).iloc[0]["count"]
+
+        # NEW: Display full ingredients table regardless of recipe_id
+        st.markdown("### 🐞 DEBUG: Full ingredients table")
+        df_all_ingredients = pd.read_sql_query("SELECT * FROM ingredients", conn)
+        st.dataframe(df_all_ingredients)
+
+        # Then filter by recipe_id only
+        st.markdown("### 🐞 DEBUG: Ingredients with selected recipe_id")
+        df_by_recipe = df_all_ingredients[df_all_ingredients["recipe_id"] == selected_id]
+        st.dataframe(df_by_recipe)
+
+        # Add this to your debug section:
+        st.write("🔬 Matched food_info nutrition values:")
+        matched_ids = tuple(df_by_recipe["matched_food_id"].dropna().astype(int))
+        if matched_ids:
+            st.dataframe(pd.read_sql(f"""
+                SELECT id, normalized_name, calories, protein, fat, carbs
+                FROM food_info
+                WHERE id IN {matched_ids}
+            """, conn))
+        else:
+            st.write("No matched_food_id values found.")
+
+        if raw_ingredient_count > 0:
+            st.warning("🔄 Some ingredients are unparsed — running updater...")
             update_ingredients(force=True)
-        st.success("✅ Ingredients re-parsed!")
-
-with col2:
-    # Button to re-run the matching step that links each ingredient
-    # to an entry in the ``food_info`` table. This can be slow so we
-    # trigger it manually.
-    if st.button("🔄 Re-match Ingredients"):
-        with st.spinner("Re-matching ingredients..."):
             match_ingredients()
-        st.success("✅ Ingredients re-matched!")
+
+        # Pull parsed ingredients
+        query_direct = f"""
+            SELECT i.food_name,
+                i.amount,
+                i.quantity,
+                i.unit,
+                i.normalized_name,
+                i.matched_food_id,
+                f.calories,
+                f.protein,
+                f.carbs,
+                f.fat
+            FROM ingredients i
+            LEFT JOIN food_info f ON i.matched_food_id = f.id
+            WHERE i.recipe_id = {selected_id}
+        """
+        ingredients = pd.read_sql_query(query_direct, conn)
 
 
-# -------------------------------
-# Food dropdown
-# -------------------------------
-food_list = load_food_list()
-selected_food = st.selectbox(
-    "Select a food from the list:",
-    ["-- Select --"] + food_list
-)
+        # ingredients = pd.read_sql_query("""
+        #     SELECT
+        #         i.id AS ingredient_id,
+        #         i.recipe_id,
+        #         i.food_name,
+        #         i.matched_food_id,
+        #         f.id AS food_info_id,
+        #         f.normalized_name,
+        #         f.calories,
+        #         f.protein,
+        #         f.carbs,
+        #         f.fat
+        #     FROM ingredients i
+        #     LEFT JOIN food_info f ON i.matched_food_id = f.id
+        #     WHERE i.recipe_id = 3;
+        # """, conn)
 
-# -------------------------------
-# Show details
-# -------------------------------
-def display_food_info(food_name):
-    """Show which recipes include the selected food."""
-    results = load_food_details(food_name)
-    if results:
-        st.subheader(f"Recipes that use **{food_name}**:")
-        for title, version, url, ingredient, amount, unit in results:
-            # Format each recipe nicely with a link back to the source
-            st.markdown(f"**{title}** ({version}) — [source]({url})")
-            st.write(f"- {ingredient}: {amount} {unit}")
+        # Show raw values before formatting
+        st.markdown("### 🧪 Raw parsed ingredient join result")
+        st.dataframe(ingredients)
+
+
+        st.write("📌 Selected Recipe ID:", selected_id)
+
+        st.write("📌 Total ingredients with this recipe_id:")
+        total_ingredients = pd.read_sql("SELECT COUNT(*) AS count FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
+        st.write(total_ingredients)
+
+        st.write("📄 Raw ingredients for this recipe_id:")
+        raw = pd.read_sql("SELECT * FROM ingredients WHERE recipe_id = ?", conn, params=(selected_id,))
+        st.dataframe(raw)
+
+        st.write("⚠️ Ingredients missing match (matched_food_id is NULL):")
+        unmatched = pd.read_sql("""
+        SELECT * FROM ingredients
+        WHERE recipe_id = ? AND matched_food_id IS NULL
+        """, conn, params=(selected_id,))
+        st.dataframe(unmatched)
+
+        st.write("🧠 Sample food_info entries:")
+        food_info_check = pd.read_sql("SELECT id, normalized_name FROM food_info ORDER BY id DESC LIMIT 10", conn)
+        st.dataframe(food_info_check)
+
+        st.write("🔎 Data types of matched_food_id and food_info.id")
+        st.code(str(df_by_recipe.dtypes))
+        st.code(str(food_info_check.dtypes))
+
+        st.markdown(f"### 🍴 Ingredients for '{selected}'")
+        st.dataframe(ingredients)
+
+        st.markdown("### 📊 Nutrition Summary")
+        if ingredients.empty:
+            st.info("No ingredients found.")
+        else:
+            missing = ingredients[ingredients["calories"] == "—"]
+            if not missing.empty:
+                st.warning(f"⚠️ Missing nutrition data for: {', '.join(missing['food_name'])}")
+            totals = ingredients[["calories", "protein", "carbs", "fat"]].replace("—", 0).astype(float).sum()
+            st.table(totals.rename("Total"))
+
+        # Debug preview
+        st.write("🧾 Sample of parsed ingredients:")
+        st.dataframe(pd.read_sql_query(
+            "SELECT id, food_name, quantity, amount, unit, normalized_name FROM ingredients WHERE recipe_id = ?",
+            conn, params=(selected_id,)
+        ))
+
+with tab2:
+    st.markdown("## 🧪 Review Fuzzy Matches")
+    matches = get_fuzzy_matches()
+    if not matches:
+        st.success("✅ No fuzzy matches to review.")
     else:
-        st.error("No info found for that food.")
+        for row in matches[:20]:
+            with st.expander(f"{row['raw_name']} → {row['matched_food']}"):
+                st.markdown(f"- **Normalized:** `{row['normalized_name']}`")
+                st.markdown(f"- **Fuzz Score:** `{row['fuzz_score']}`")
+                st.markdown(f"- **Match Type:** `{row['match_type']}`")
+        st.info("More detailed review available via CLI or future admin tab.")
 
-if selected_food != "-- Select --":
-    # When the user picks a food, show which recipes use it.
-    display_food_info(selected_food)
+    st.markdown("---")
+    st.markdown("## 🧾 Ingredient Parsing Logs")
+    show_review_log()
 
-# -------------------------------
-# Recipes section (from external module)
-# -------------------------------
-# Delegate the heavy lifting of showing recipe data to the
-# ``recipe_viewer`` module.  Calling ``show_recipe_viewer``
-# inserts its own Streamlit widgets into the page.
-recipe_viewer.show_recipe_viewer()
