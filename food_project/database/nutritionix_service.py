@@ -91,8 +91,18 @@ def get_nutrition_data(
     else:
         try:
             mock_data = _fetch_from_api(food_name)
+        # Fix: Use specific exception handling for better error diagnosis
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Network/API error for '{food_name}': {e}")
+            return None
+        except (KeyError, ValueError, TypeError) as e:
+            print(f"❌ Data parsing error for '{food_name}': {e}")
+            return None
         except Exception as e:
-            print(f"❌ API fetch failed for '{food_name}': {e}")
+            print(f"❌ Unexpected error for '{food_name}': {e}")
+            # Log the full traceback for debugging
+            import traceback
+            print(f"Full traceback: {traceback.format_exc()}")
             return None
 
     norm = normalize_food_name(mock_data["food_name"])

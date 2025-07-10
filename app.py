@@ -22,10 +22,12 @@ st.title("📊 Food Info Tracker" + (" — Staging" if branch == "staging" else 
 tab1, tab2 = st.tabs(["🍽 Recipes & Nutrition", "🧪 Review Matches"])
 
 with tab1:
-    conn = get_connection()
-    conn.row_factory = sqlite3.Row
-    st.write("📍 DB path in app:", conn.execute("PRAGMA database_list").fetchone()[2])
-    st.markdown(f"📍 DB path in app: `{os.path.abspath('food_info.db')}`")
+    # Fix: Use context manager to ensure connection is properly closed
+    try:
+        conn = get_connection()
+        conn.row_factory = sqlite3.Row
+        st.write("📍 DB path in app:", conn.execute("PRAGMA database_list").fetchone()[2])
+        st.markdown(f"📍 DB path in app: `{os.path.abspath('food_info.db')}`")
 
     st.subheader("🧬 Schema Debug")
 
@@ -75,8 +77,14 @@ with tab1:
                 update_ingredients(force=True)
                 match_ingredients()
                 st.rerun()
-            except Exception as e:
+            # Fix: Use specific exception handling instead of broad Exception
+            except (ValueError, ConnectionError, sqlite3.Error) as e:
                 st.error(f"Failed to parse or insert recipe: {e}")
+            except Exception as e:
+                st.error(f"Unexpected error occurred: {e}")
+                # Log the full exception for debugging
+                import traceback
+                st.error(f"Debug info: {traceback.format_exc()}")
         else:
             st.warning("Please enter a valid recipe URL.")
 
@@ -132,11 +140,14 @@ with tab1:
         st.write("🔬 Matched food_info nutrition values:")
         matched_ids = tuple(df_by_recipe["matched_food_id"].dropna().astype(int))
         if matched_ids:
-            st.dataframe(pd.read_sql(f"""
+            # Fix: Use parameterized query to prevent SQL injection
+            placeholders = ','.join('?' * len(matched_ids))
+            query = f"""
                 SELECT id, normalized_name, calories, protein, fat, carbs
                 FROM food_info
-                WHERE id IN {matched_ids}
-            """, conn))
+                WHERE id IN ({placeholders})
+            """
+            st.dataframe(pd.read_sql(query, conn, params=matched_ids))
         else:
             st.write("No matched_food_id values found.")
 
@@ -146,7 +157,8 @@ with tab1:
             match_ingredients()
 
         # Pull parsed ingredients
-        query_direct = f"""
+        # Fix: Use parameterized query to prevent SQL injection
+        query_direct = """
             SELECT i.food_name,
                 i.amount,
                 i.quantity,
@@ -159,9 +171,9 @@ with tab1:
                 f.fat
             FROM ingredients i
             LEFT JOIN food_info f ON i.matched_food_id = f.id
-            WHERE i.recipe_id = {selected_id}
+            WHERE i.recipe_id = ?
         """
-        ingredients = pd.read_sql_query(query_direct, conn)
+        ingredients = pd.read_sql_query(query_direct, conn, params=(selected_id,))
 
 
         # ingredients = pd.read_sql_query("""
@@ -230,6 +242,11 @@ with tab1:
             "SELECT id, food_name, quantity, amount, unit, normalized_name FROM ingredients WHERE recipe_id = ?",
             conn, params=(selected_id,)
         ))
+
+    # Fix: Ensure database connection is properly closed
+    finally:
+        if 'conn' in locals():
+            conn.close()
 
 with tab2:
     st.markdown("## 🧪 Review Fuzzy Matches")
