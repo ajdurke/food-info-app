@@ -135,6 +135,7 @@ if selected_id:
             i.food_name,
             i.amount,
             i.unit,
+            i.estimated_grams,
             i.normalized_name,
             i.matched_food_id,
             f.id AS food_info_id,
@@ -180,5 +181,15 @@ if selected_id:
     if df.empty:
         st.info("No ingredients found for this recipe.")
     else:
-        summary = df[["calories", "protein", "carbs", "fat"]].fillna(0).astype(float).sum()
-        st.table(summary.rename("Total"))
+        # Only use rows where estimated_grams and calories are not null
+        df_valid = df.dropna(subset=["estimated_grams", "calories"])
+        # Calculate nutrition per ingredient based on estimated_grams
+        for nutrient in ["calories", "protein", "carbs", "fat"]:
+            df_valid[nutrient + "_total"] = (
+                df_valid[nutrient].astype(float) * df_valid["estimated_grams"].astype(float) / 100
+            )
+        # Sum up the totals
+        summary = df_valid[[nutrient + "_total" for nutrient in ["calories", "protein", "carbs", "fat"]]].sum()
+        # Rename for display
+        summary.index = ["calories", "protein", "carbs", "fat"]
+        st.table(summary.rename("Total (using grams)"))

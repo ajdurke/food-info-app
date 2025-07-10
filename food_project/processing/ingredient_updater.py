@@ -13,6 +13,8 @@ from food_project.llm.estimate_nutrition import estimate_nutrition_from_llm
 from food_project.database.nutritionix_service import get_nutrition_data
 from food_project.database.sqlite_connector import init_db
 
+print("🚨 ingredient_updater.py is running from:", __file__)
+
 def update_ingredients(force=False, db_path="food_info.db", init=False, mock=False, mode="auto"):
     """Update ingredients table with parsed amounts, units, match scores, LLM fallback, and nutrition."""
     abs_path = Path(db_path).resolve()
@@ -52,6 +54,7 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
         print("❌ Error: ingredients table missing. Did you initialize the DB?")
         conn.close()
         return
+    print("🚩 Ingredients table exists, continuing...")
 
     total = cur.fetchone()[0]
     st.write(f"📊 Total ingredients in DB: {total}")
@@ -84,13 +87,18 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
         query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NOT NULL AND matched_food_id IS NULL"
     elif mode == "full":
         query = "SELECT id, food_name FROM ingredients WHERE normalized_name IS NULL OR matched_food_id IS NULL"
+    elif mode == "all":
+        query = "SELECT id, food_name FROM ingredients"
     else:
-        print(f"❌ Unknown mode '{mode}'. Use 'auto', 'match', or 'full'.")
+        print(f"❌ Unknown mode '{mode}'. Use 'auto', 'match', 'full', or 'all'.")
         conn.close()
         return
-
+    print(f"DEBUG: About to set query for mode={mode}")
+    print(f"DEBUG: Query set to: {query}")
     rows = cur.execute(query).fetchall()
     print(f"🔍 Ingredients to update: {len(rows)}")
+    if len(rows) > 0:
+        print('Sample rows to update:', rows[:3])
 
     updated = 0
     for ing_id, raw_text in rows:
@@ -197,3 +205,12 @@ def update_ingredients(force=False, db_path="food_info.db", init=False, mock=Fal
 
     conn.close()
     print(f"✅ Updated {updated} ingredient(s). (mode='{mode}')")
+
+if __name__ == "__main__":
+    # call update_ingredients(...)
+    print("🚩 Running update_ingredients from __main__")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", default="auto", help="Mode for updating ingredients")
+    args = parser.parse_args()
+    update_ingredients(mode=args.mode)
